@@ -101,6 +101,7 @@ int print_comment_field(int cmd_id);
 int commit_command(int);
 int write_command_to_file(char *);
 void clean_comment_data(char *);
+int command_request_origin_is_valid(void);
 
 void cgicfg_callback(const char*, const char*);
 void document_header(int);
@@ -241,7 +242,12 @@ int main(void) {
 
 	/* the user wants to commit the command */
 	else if(command_mode == CMDMODE_COMMIT) {
-		if (formid_ok == ERROR)	/* we're expecting an id but it wasn't there... */
+		const char *request_method = getenv("REQUEST_METHOD");
+		if (request_method == NULL || strcmp(request_method, "POST"))
+			printf("<p>Error: Command submissions require POST.</p>\n");
+		else if (command_request_origin_is_valid() == FALSE)
+			printf("<p>Error: Command submission origin did not match this Nagios server.</p>\n");
+		else if (formid_ok == ERROR)	/* we're expecting an id but it wasn't there... */
 			printf("<p>Error: Invalid or missing CSRF cookie!</p>\n");
 		else
 			commit_command_data(command_type);
@@ -281,13 +287,63 @@ void cgicfg_callback(const char *var, const char *val)
 	strip_html_brackets(ecmd->default_comment);
 }
 
-/* generates and sets a pseudo-random cookie if one is not already set */
+/* Browsers send Origin for form POSTs. Validate it when present and use a
+ * same-origin Referer as a fallback, while preserving non-browser API clients
+ * that prove possession of a valid form token but send neither header. */
+int command_request_origin_is_valid(void) {
+	const char *host = getenv("HTTP_HOST");
+	const char *origin = getenv("HTTP_ORIGIN");
+	const char *referer = getenv("HTTP_REFERER");
+	char expected_origin[MAX_FILENAME_LENGTH];
+	char host_buffer[MAX_FILENAME_LENGTH];
+	const char *default_port;
+	size_t expected_length;
+	size_t referer_length;
+	size_t host_length;
+	size_t port_length;
+	size_t i;
+
+	if((origin == NULL || *origin == '\0') && (referer == NULL || *referer == '\0'))
+		return TRUE;
+	if(host == NULL || *host == '\0' || strchr(host, '/') != NULL || strchr(host, '\\') != NULL)
+		return FALSE;
+	host_length = strlen(host);
+	if(host_length >= sizeof(host_buffer))
+		return FALSE;
+	for(i = 0; i < host_length; i++)
+		if((unsigned char)host[i] <= 0x20 || (unsigned char)host[i] >= 0x7f)
+			return FALSE;
+	strncpy(host_buffer, host, sizeof(host_buffer));
+	host_buffer[sizeof(host_buffer) - 1] = '\0';
+	default_port = nagformid_request_is_https() ? ":443" : ":80";
+	port_length = strlen(default_port);
+	if(host_length > port_length && !strcasecmp(host_buffer + host_length - port_length, default_port))
+		host_buffer[host_length - port_length] = '\0';
+
+	if(snprintf(expected_origin, sizeof(expected_origin), "%s://%s",
+			nagformid_request_is_https() ? "https" : "http", host_buffer) >= (int)sizeof(expected_origin))
+		return FALSE;
+
+	if(origin != NULL && *origin != '\0')
+		return !strcasecmp(origin, expected_origin) ? TRUE : FALSE;
+
+	expected_length = strlen(expected_origin);
+	referer_length = strlen(referer);
+	if(referer_length < expected_length)
+		return FALSE;
+	return !strncasecmp(referer, expected_origin, expected_length) &&
+		(referer[expected_length] == '/' || referer[expected_length] == '\0') ? TRUE : FALSE;
+}
+
+/* Generate and set a 256-bit command-form token if one is not already set. */
 void set_cookie() {
 	if (!(cookie_form_id && *cookie_form_id)) {
-		unsigned long long n = ((unsigned long long)rand() << 32) | rand();
-		char buffer[32];
+		char buffer[NAGFORMID_TOKEN_HEX_LENGTH + 1];
 
-		snprintf(buffer, sizeof(buffer), "%llx", n);
+		if(generate_nagformid_token(buffer, sizeof(buffer)) < 0) {
+			fprintf(stderr, "Unable to obtain secure random bytes for command form token\n");
+			exit(1);
+			}
 
 		cookie_form_id = strdup(buffer);
 		if (!cookie_form_id) {
@@ -295,7 +351,7 @@ void set_cookie() {
 			exit(1);
 		}
 
-		printf("Set-Cookie: NagFormId=%s; SameSite=Strict\r\n", cookie_form_id);
+		set_nagformid_cookie_header(cookie_form_id);
 	}
 }
 
@@ -303,6 +359,8 @@ void set_cookie() {
 void document_header(int use_stylesheet) {
 
 	set_cookie();
+	printf("Cache-Control: no-store\r\n");
+	printf("Pragma: no-cache\r\n");
 
 	if(content_type == WML_CONTENT) {
 
@@ -322,6 +380,7 @@ void document_header(int use_stylesheet) {
 
 		printf("<html>\n");
 		printf("<head>\n");
+		printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 		printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 		printf("<title>\n");
 		printf("External Command Interface\n");
@@ -330,6 +389,8 @@ void document_header(int use_stylesheet) {
 		if(use_stylesheet == TRUE) {
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMON_CSS);
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMAND_CSS);
+			printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+			printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 			}
 
 		printf("</head>\n");
@@ -1026,7 +1087,7 @@ void request_command_data(int cmd) {
 	printf("<TR><TD CLASS='optBoxItem'>\n");
 	printf("<form method='post' action='%s'>\n", COMMAND_CGI);
 	if (cookie_form_id && *cookie_form_id)
-		printf("<INPUT TYPE='hidden' NAME='nagFormId' VALUE='%s'\n", cookie_form_id);
+		printf("<INPUT TYPE='hidden' NAME='nagFormId' VALUE='%s'>\n", escape_string(cookie_form_id));
 	printf("<TABLE CELLSPACING=0 CELLPADDING=0 CLASS='optBox'>\n");
 
 	printf("<tr><td><INPUT TYPE='HIDDEN' NAME='cmd_typ' VALUE='%d'><INPUT TYPE='HIDDEN' NAME='cmd_mod' VALUE='%d'></td></tr>\n", cmd, CMDMODE_COMMIT);
@@ -1883,7 +1944,7 @@ void commit_command_data(int cmd) {
 		else {
 			printf("<P><DIV CLASS='errorMessage'>Sorry, but you are not authorized to commit the specified command.</DIV></P>\n");
 			printf("<P><DIV CLASS='errorDescription'>Read the section of the documentation that deals with authentication and authorization in the CGIs for more information.<BR><BR>\n");
-			printf("<A HREF='javascript:window.history.go(-2)'>Return from whence you came</A></DIV></P>\n");
+			printf("<A HREF='#' data-history-step='-2'>Return from whence you came</A></DIV></P>\n");
 		}
 	}
 
@@ -1894,8 +1955,8 @@ void commit_command_data(int cmd) {
 		}
 		else {
 			printf("<P><DIV CLASS='errorMessage'>%s</DIV></P>\n", error_string);
-			printf("<P><DIV CLASS='errorDescription'>Go <A HREF='javascript:window.history.go(-1)'>back</A> and verify that you entered all required information correctly.<BR>\n");
-			printf("<A HREF='javascript:window.history.go(-2)'>Return from whence you came</A></DIV></P>\n");
+			printf("<P><DIV CLASS='errorDescription'>Go <A HREF='#' data-history-step='-1'>back</A> and verify that you entered all required information correctly.<BR>\n");
+			printf("<A HREF='#' data-history-step='-2'>Return from whence you came</A></DIV></P>\n");
 		}
 	}
 
@@ -1907,7 +1968,7 @@ void commit_command_data(int cmd) {
 		else {
 			printf("<P><DIV CLASS='errorMessage'>Sorry, but Nagios is currently not checking for external commands, so your command will not be committed!</DIV></P>\n");
 			printf("<P><DIV CLASS='errorDescription'>Read the documentation for information on how to enable external commands...<BR><BR>\n");
-			printf("<A HREF='javascript:window.history.go(-2)'>Return from whence you came</A></DIV></P>\n");
+			printf("<A HREF='#' data-history-step='-2'>Return from whence you came</A></DIV></P>\n");
 		}
 	}
 
@@ -1924,7 +1985,7 @@ void commit_command_data(int cmd) {
 			else {
 				printf("<P><DIV CLASS='infoMessage'>Your command request was successfully submitted to Nagios for processing.<BR><BR>\n");
 				printf("Note: It may take a while before the command is actually processed.<BR><BR>\n");
-				printf("<A HREF='javascript:window.history.go(-2)'>Done</A></DIV></P>");
+				printf("<A HREF='#' data-history-step='-2'>Done</A></DIV></P>");
 			}
 		}
 		else {
@@ -1933,7 +1994,7 @@ void commit_command_data(int cmd) {
 			}
 			else {
 				printf("<P><DIV CLASS='errorMessage'>An error occurred while attempting to commit your command for processing.<BR><BR>\n");
-				printf("<A HREF='javascript:window.history.go(-2)'>Return from whence you came</A></DIV></P>\n");
+				printf("<A HREF='#' data-history-step='-2'>Return from whence you came</A></DIV></P>\n");
 			}
 		}
 	}

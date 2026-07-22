@@ -7,11 +7,107 @@
 
 #include "../include/config.h"
 #include "../include/getcgi.h"
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
 
 
 #undef PARANOID_CGI_INPUT
+
+
+int nagformid_request_is_https(void) {
+	const char *https = getenv("HTTPS");
+	const char *scheme = getenv("REQUEST_SCHEME");
+
+	return (https != NULL && (!strcasecmp(https, "on") || !strcmp(https, "1"))) ||
+		(scheme != NULL && !strcasecmp(scheme, "https"));
+}
+
+
+int generate_nagformid_token(char *buffer, size_t buffer_length) {
+	static const char hex[] = "0123456789abcdef";
+	unsigned char random_bytes[NAGFORMID_TOKEN_BYTES];
+	ssize_t bytes_read;
+	size_t offset = 0;
+	size_t i;
+	int fd;
+
+	if(buffer == NULL || buffer_length < NAGFORMID_TOKEN_HEX_LENGTH + 1)
+		return -1;
+
+	do {
+		fd = open("/dev/urandom", O_RDONLY);
+		} while(fd < 0 && errno == EINTR);
+	if(fd < 0)
+		return -1;
+
+	while(offset < sizeof(random_bytes)) {
+		bytes_read = read(fd, random_bytes + offset, sizeof(random_bytes) - offset);
+		if(bytes_read < 0 && errno == EINTR)
+			continue;
+		if(bytes_read <= 0) {
+			close(fd);
+			return -1;
+			}
+		offset += (size_t)bytes_read;
+		}
+	close(fd);
+
+	for(i = 0; i < sizeof(random_bytes); i++) {
+		buffer[i * 2] = hex[random_bytes[i] >> 4];
+		buffer[i * 2 + 1] = hex[random_bytes[i] & 0x0f];
+		}
+	buffer[NAGFORMID_TOKEN_HEX_LENGTH] = '\0';
+	return 0;
+}
+
+
+static void nagformid_cookie_path(char *buffer, size_t buffer_length) {
+	const char *script_name = getenv("SCRIPT_NAME");
+	char *last_slash;
+	size_t i;
+
+	if(buffer == NULL || buffer_length == 0)
+		return;
+	strncpy(buffer, "/", buffer_length);
+	buffer[buffer_length - 1] = '\0';
+	if(script_name == NULL || script_name[0] != '/' || strlen(script_name) >= buffer_length)
+		return;
+
+	for(i = 0; script_name[i] != '\0'; i++)
+		if((unsigned char)script_name[i] <= 0x20 || (unsigned char)script_name[i] >= 0x7f || script_name[i] == ';')
+			return;
+
+	strncpy(buffer, script_name, buffer_length);
+	buffer[buffer_length - 1] = '\0';
+	last_slash = strrchr(buffer, '/');
+	if(last_slash == NULL) {
+		strncpy(buffer, "/", buffer_length);
+		buffer[buffer_length - 1] = '\0';
+		return;
+		}
+	last_slash[1] = '\0';
+}
+
+
+void set_nagformid_cookie_header(const char *token) {
+	char cookie_path[1024];
+
+	if(token == NULL)
+		return;
+	if(nagformid_request_is_https()) {
+		/* __Host- cookies cannot be set by sibling hosts and require Path=/,
+		 * Secure, and no Domain attribute. */
+		printf("Set-Cookie: " NAGFORMID_SECURE_COOKIE_NAME "=%s; Path=/; HttpOnly; SameSite=Strict; Secure\r\n", token);
+		return;
+		}
+
+	nagformid_cookie_path(cookie_path, sizeof(cookie_path));
+	printf("Set-Cookie: " NAGFORMID_COOKIE_NAME "=%s; Path=%s; HttpOnly; SameSite=Strict\r\n", token, cookie_path);
+}
 
 
 /* Remove potentially harmful characters from CGI input that we don't need or want */
@@ -48,13 +144,14 @@ void sanitize_cgi_input(char **cgivars) {
 /* convert encoded hex string (2 characters representing an 8-bit number) to its ASCII char equivalent */
 unsigned char hex_to_char(char *input) {
 	unsigned char outchar = '\x0';
-	unsigned int outint;
+	unsigned int outint = 0;
 	char tempbuf[3];
 
 	/* NULL or empty string */
 	if(input == NULL)
 		return '\x0';
-	if(input[0] == '\x0')
+	if(input[0] == '\x0' || input[1] == '\x0' ||
+			!isxdigit((unsigned char)input[0]) || !isxdigit((unsigned char)input[1]))
 		return '\x0';
 
 	tempbuf[0] = input[0];
@@ -91,7 +188,8 @@ void unescape_cgi_input(char *input) {
 
 		if(input[x] == '\x0')
 			break;
-		else if(input[x] == '%') {
+		else if(input[x] == '%' && x + 2 < len &&
+				isxdigit((unsigned char)input[x + 1]) && isxdigit((unsigned char)input[x + 2])) {
 			input[y] = hex_to_char(&input[x + 1]);
 			x += 2;
 			}
@@ -116,9 +214,13 @@ char **getcgivars(void) {
 	char **cgivars;
 	char **pairlist;
 	int paircount;
+	int pairlist_capacity;
 	char *nvpair;
 	char *eqpos;
-	char *cookies, *formid;
+	char *cookies, *formid, *cookie_cursor, *cookie_end;
+	char *decoded_name, *raw_equals;
+	const char *cookie_prefix;
+	size_t formid_len, cookie_prefix_len, cookie_segment_len, raw_name_len, canonical_prefix_len;
 
 	/* initialize char variable(s) */
 	cgiinput = "";
@@ -214,7 +316,8 @@ char **getcgivars(void) {
 	/* first, split on ampersands (&) to extract the name-value pairs into pairlist */
 	/* allocate memory for 256 name-value pairs at a time, increasing by same
 	   amount as necessary... */
-	pairlist = (char **)malloc(256 * sizeof(char *));
+	pairlist_capacity = 256;
+	pairlist = (char **)malloc(pairlist_capacity * sizeof(char *));
 	if(pairlist == NULL) {
 		printf("getcgivars(): Could not allocate memory for name-value pairlist.\n");
 		exit(1);
@@ -222,10 +325,33 @@ char **getcgivars(void) {
 	paircount = 0;
 	nvpair = strtok(cgiinput, "&");
 	while(nvpair) {
-		/* NagFormId must come from a cookie - skip any attempt to set it by other means */
-		if (strstr(nvpair, "NagFormId=")){
+		/* NagFormId must come from a cookie. Decode the complete parameter name
+		 * before comparing so percent-encoding cannot manufacture the trusted name. */
+		raw_equals = strchr(nvpair, '=');
+		raw_name_len = raw_equals == NULL ? strlen(nvpair) : (size_t)(raw_equals - nvpair);
+		decoded_name = (char *)malloc(raw_name_len + 1);
+		if(decoded_name == NULL) {
+			printf("getcgivars(): Could not allocate memory for CGI parameter name.\n");
+			exit(1);
+			}
+		memcpy(decoded_name, nvpair, raw_name_len);
+		decoded_name[raw_name_len] = '\0';
+		unescape_cgi_input(decoded_name);
+		if(!strcmp(decoded_name, NAGFORMID_COOKIE_NAME) || !strcmp(decoded_name, NAGFORMID_SECURE_COOKIE_NAME)) {
+			free(decoded_name);
 			nvpair = strtok(NULL, "&");
 			continue;
+			}
+		free(decoded_name);
+
+		/* Always retain room for this entry and the terminating NULL. */
+		if(paircount + 2 > pairlist_capacity) {
+			pairlist_capacity += 256;
+			pairlist = (char **)realloc(pairlist, pairlist_capacity * sizeof(char *));
+			if(pairlist == NULL) {
+				printf("getcgivars(): Could not re-allocate memory for name-value pairlist.\n");
+				exit(1);
+				}
 			}
 		pairlist[paircount] = strdup(nvpair);
 		if( NULL == pairlist[paircount]) {
@@ -233,13 +359,6 @@ char **getcgivars(void) {
 			exit(1);
 			}
 		paircount++;
-		if(!(paircount % 256)) {
-			pairlist = (char **)realloc(pairlist, (paircount + 256) * sizeof(char *));
-			if(pairlist == NULL) {
-				printf("getcgivars(): Could not re-allocate memory for name-value pairlist.\n");
-				exit(1);
-				}
-			}
 		nvpair = strtok(NULL, "&");
 		}
 
@@ -247,35 +366,56 @@ char **getcgivars(void) {
 
 	cookies = getenv("HTTP_COOKIE");
 	if (cookies && *cookies) {
-		formid = strstr(cookies, "NagFormId=");
+		cookie_prefix = nagformid_request_is_https() ? NAGFORMID_SECURE_COOKIE_PREFIX : NAGFORMID_COOKIE_PREFIX;
+		cookie_prefix_len = strlen(cookie_prefix);
+		canonical_prefix_len = strlen(NAGFORMID_COOKIE_PREFIX);
+		formid = NULL;
+		cookie_cursor = cookies;
+		while(*cookie_cursor) {
+			/* Cookie pairs are separated by semicolons with optional spaces/tabs.
+			 * Whitespace inside another cookie's value is not a valid boundary. */
+			while(*cookie_cursor == ' ' || *cookie_cursor == '\t')
+				cookie_cursor++;
+			cookie_end = strchr(cookie_cursor, ';');
+			cookie_segment_len = cookie_end == NULL ? strlen(cookie_cursor) : (size_t)(cookie_end - cookie_cursor);
+			if(cookie_segment_len == cookie_prefix_len + NAGFORMID_TOKEN_HEX_LENGTH &&
+					!strncmp(cookie_cursor, cookie_prefix, cookie_prefix_len)) {
+				formid = cookie_cursor;
+				break;
+				}
+			if(cookie_end == NULL)
+				break;
+			cookie_cursor = cookie_end + 1;
+			}
 		if (formid) {
-			if(!(paircount % 256)) {
-				/* if no query parameters were provided, paircount can begin as zero, resulting in */
-				/* truncation of the pairlist array if we do not reserve at least two elements. */
-				pairlist = (char **)realloc(pairlist, (paircount + 2) * sizeof(char *));
+			if(paircount + 2 > pairlist_capacity) {
+				pairlist_capacity += 256;
+				pairlist = (char **)realloc(pairlist, pairlist_capacity * sizeof(char *));
 				if(pairlist == NULL) {
 					printf("getcgivars(): Could not re-allocate memory for name-value pairlist.\n");
 					exit(1);
+					}
 				}
-			}
 
-			formid = strtok(formid, ";");
-			if (strlen(formid) > 10 && strlen(formid) < 21) {
-				for (i = strlen(formid) - 1; i > 9; --i)
-					if (!isxdigit(formid[i]))
+			formid_len = cookie_segment_len - cookie_prefix_len;
+			if (formid_len == NAGFORMID_TOKEN_HEX_LENGTH) {
+				for (i = 0; i < (int)formid_len; ++i)
+					if (!isxdigit((unsigned char)formid[cookie_prefix_len + i]))
 						break;
-				if (i == 9) {
-					pairlist[paircount] = strdup(formid);
-
+				if (i == (int)formid_len) {
+					pairlist[paircount] = malloc(canonical_prefix_len + formid_len + 1);
 					if (!pairlist[paircount]) {
 						printf("getcgivars(): Could not allocate memory for name-value pair #%d.\n", paircount);
 						exit(1);
 					}
+					memcpy(pairlist[paircount], NAGFORMID_COOKIE_PREFIX, canonical_prefix_len);
+					memcpy(pairlist[paircount] + canonical_prefix_len, formid + cookie_prefix_len, formid_len);
+					pairlist[paircount][canonical_prefix_len + formid_len] = '\0';
 					paircount++;
+					}
 				}
 			}
 		}
-	}
 
 	/* terminate the list */
 	pairlist[paircount] = NULL;

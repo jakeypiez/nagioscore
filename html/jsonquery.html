@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en" class="dark">
 	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="robots" content="noindex, nofollow">
+		<meta name="referrer" content="same-origin">
 		<title>JSON Query Generator</title>
 		<link rel="stylesheet" type="text/css" href="stylesheets/jsonquery.css"/>
-		<script type="text/javascript" src="js/jquery-3.7.1.min.js"></script>
-		<script type="text/javascript" src="js/jsonquery.js"></script>
+		<link rel="stylesheet" type="text/css" href="stylesheets/theme.css"/>
+		<script type="text/javascript" src="js/jquery-3.7.1.min.js" defer></script>
+		<script type="text/javascript" src="js/coreui.js" defer></script>
+		<script type="text/javascript" src="js/jsonquery.js" defer></script>
 	</head>
-	<body>
+	<body class="json-query-page">
 		<div id="wrap">
 			<h1>JSON Query Generator</h1>
-			<div id="results">
+			<div id="results" aria-live="polite">
 				<p>Your query results will appear here.</p>
 			</div>
 			<div id="options">
-				<p>Enter your options here.</p>
+				<p>Choose an API and build a local, authenticated query.</p>
 				<form id="query" action="jsonquery.html" method="get">
 					<table id="cgiform">
 						<tr>
 							<td class="label">
-								CGI:
+								<label for="cginame">CGI</label>
 							</td>
 							<td>
 								<select id="cginame" name="cginame">

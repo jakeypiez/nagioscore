@@ -242,13 +242,8 @@ int main(void) {
 		sound = service_warning_sound;
 	else if(services_unknown_unacknowledged == 0 && services_warning_unacknowledged == 0 && services_critical_unacknowledged == 0 && hosts_down_unacknowledged == 0 && hosts_unreachable_unacknowledged == 0 && normal_sound != NULL)
 		sound = normal_sound;
-	if(sound != NULL) {
-		printf("<object type=\"audio/x-wav\" data=\"%s%s\" height=\"1\" width=\"1\">", url_media_path, sound);
-		printf("<param name=\"filename\" value=\"%s%s\">", url_media_path, sound);
-		printf("<param name=\"autostart\" value=\"true\">");
-		printf("<param name=\"playcount\" value=\"1\">");
-		printf("</object>");
-		}
+	if(sound != NULL)
+		printf("<audio src=\"%s%s\" autoplay preload=\"auto\" hidden aria-hidden=\"true\"></audio>", url_media_path, sound);
 
 
 	/**** display main tac screen ****/
@@ -292,6 +287,7 @@ void document_header(int use_stylesheet) {
 
 	printf("<HTML>\n");
 	printf("<HEAD>\n");
+	printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 	printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 	printf("<TITLE>\n");
 	printf("Nagios Tactical Monitoring Overview\n");
@@ -301,6 +297,8 @@ void document_header(int use_stylesheet) {
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMON_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, TAC_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, NAGFUNCS_CSS);
+		printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+		printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 		}
 
 	printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, JQUERY_JS);
@@ -308,22 +306,16 @@ void document_header(int use_stylesheet) {
 
 	if (enable_page_tour == TRUE) {
 		printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, NAGFUNCS_JS);
-
-		printf("<script type='text/javascript'>\nvar vbox, vBoxId='tac', "
-				"vboxText = '<a href=https://www.nagios.com/tours target=_blank>"
-				"Click here to watch the entire Nagios Core 4 Tour!</a>';\n");
-		printf("$(document).ready(function() {\n"
-				"var user = '%s';\nvBoxId += ';' + user;", current_authdata.username);
-		printf("vbox = new vidbox({pos:'lr',"
-				"vidurl:'https://www.youtube.com/embed/l20YRDhbOfA',text:vboxText,"
-				"vidid:vBoxId});");
-		printf("\n});\n</script>\n");
 		}
 
 
 
 	printf("</HEAD>\n");
-	printf("<BODY CLASS='tac' marginwidth=2 marginheight=2 topmargin=0 leftmargin=0 rightmargin=0>\n");
+	printf("<BODY CLASS='tac'");
+	if (enable_page_tour == TRUE)
+		printf(" data-page-tour-url='https://www.youtube-nocookie.com/embed/l20YRDhbOfA' data-page-tour-id='tac' data-page-tour-user='%s'",
+				escape_string((current_authdata.username == NULL) ? "" : current_authdata.username));
+	printf(">\n");
 
 	/* include user SSI header */
 	include_ssi_files(TAC_CGI, SSI_HEADER);

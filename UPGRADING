@@ -1,6 +1,24 @@
 Upgrading Nagios Core
 =====================
 
+Modern web interface security changes
+-------------------------------------
+
+The optional "corewindow" argument no longer accepts external URLs. When it
+is enabled at configure time, it is restricted to absolute paths inside the
+configured Nagios HTML and CGI URL spaces. Existing bookmarks that framed an
+unrelated same-origin or external application now open the Nagios overview.
+
+Command forms use 256-bit tokens. HTTPS installations use a host-only Secure
+cookie and browser command POSTs with an Origin or Referer header must match
+the Nagios origin. Basic authentication should always be protected by HTTPS.
+If a trusted reverse proxy terminates TLS, configure it to expose HTTPS=on or
+REQUEST_SCHEME=https to the CGI environment without trusting an unsanitized
+client X-Forwarded-Proto header.
+
+The modern interface is installed by default. The install-classicui and
+install-exfoliation targets remain available for legacy CGI presentation.
+
 nagios-4.3.0 - 2017-02-21
 -------------------------
 

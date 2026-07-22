@@ -546,6 +546,7 @@ void document_header(int use_stylesheet) {
 
 	printf("<html>\n");
 	printf("<head>\n");
+	printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 	printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 	printf("<title>\n");
 	printf("Extended Information\n");
@@ -555,32 +556,28 @@ void document_header(int use_stylesheet) {
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>", url_stylesheets_path, COMMON_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>", url_stylesheets_path, EXTINFO_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, NAGFUNCS_CSS);
+		printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+		printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 		}
 
 	if (display_type == DISPLAY_HOST_INFO)
-		vidurl = "https://www.youtube.com/embed/n3QEAf-MxY4";
+		vidurl = "https://www.youtube-nocookie.com/embed/n3QEAf-MxY4";
 	else if(display_type == DISPLAY_SERVICE_INFO)
-		vidurl = "https://www.youtube.com/embed/f_knwQOS6FI";
+		vidurl = "https://www.youtube-nocookie.com/embed/f_knwQOS6FI";
 
 	if (enable_page_tour == TRUE && vidurl) {
 		printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, JQUERY_JS);
 		printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, NAGFUNCS_JS);
-		printf("<script type='text/javascript'>\n");
-		printf("var vbox, vBoxId='extinfo%d', vboxText = "
-				"'<a href=https://www.nagios.com/tours target=_blank>"
-				"Click here to watch the entire Nagios Core 4 Tour!</a>';\n",
-				display_type);
-		printf("$(document).ready(function() {\n"
-				"var user = '%s';\nvBoxId += ';' + user;\n",
-				current_authdata.username);
-		printf("vbox = new vidbox({pos:'lr',vidurl:'%s',text:vboxText,"
-				"vidid:vBoxId});\n", vidurl);
-		printf("});\n</script>\n");
 		}
 
 	printf("</head>\n");
 
-	printf("<body CLASS='extinfo'>\n");
+	printf("<body CLASS='extinfo'");
+	if (enable_page_tour == TRUE && vidurl != NULL)
+		printf(" data-page-tour-url='%s' data-page-tour-id='extinfo%d' data-page-tour-user='%s'",
+				vidurl, display_type,
+				escape_string((current_authdata.username == NULL) ? "" : current_authdata.username));
+	printf(">\n");
 
 	/* include user SSI header */
 	include_ssi_files(EXTINFO_CGI, SSI_HEADER);

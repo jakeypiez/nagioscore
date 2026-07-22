@@ -1,79 +1,138 @@
 <?php
 require_once(dirname(__FILE__).'/config.inc.php');
+header('Cache-Control: no-store');
+header('Pragma: no-cache');
 
-// Allow specifying main window URL for permalinks, etc.
-$url = 'main.php';
+/*
+ * Keep bookmarked CGI views inside the authenticated Nagios origin.  The
+ * historical corewindow option accepted arbitrary http(s) URLs, which made
+ * it possible to place untrusted content inside a trusted Nagios shell.
+ */
+function nagios_path_is_within($path, $base) {
+	$base = rtrim($base, '/');
+	if ($base === '') {
+		$base = '/';
+	}
+	return $base === '/' ? strncmp($path, '/', 1) === 0 :
+		($path === $base || strncmp($path, $base . '/', strlen($base) + 1) === 0);
+}
 
-if ("@COREWINDOW@" == "yes" && isset($_GET['corewindow'])) {
+function nagios_core_window_url($candidate, $cgi_base_path, $html_base_path) {
+	if (!is_string($candidate) || $candidate === '' || preg_match('/[\x00-\x1F\x7F]/', $candidate) ||
+		strpos($candidate, '\\') !== false || preg_match('/%5c/i', $candidate)) {
+		return 'main.php';
+	}
 
-	// The default window url may have been overridden with a permalink...
-	// Parse the URL and remove permalink option from base.
-	$a = parse_url($_GET['corewindow']);
+	$parts = parse_url($candidate);
+	if ($parts === false || isset($parts['scheme']) || isset($parts['host']) ||
+		isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) {
+		return 'main.php';
+	}
 
-	// Build the base url.
-	$url = htmlentities($a['path']).'?';
-	$url = (isset($a['host'])) ? $a['scheme'].'://'.$a['host'].$url : '/'.$url;
-
-	$query = isset($a['query']) ? $a['query'] : '';
-	$pairs = explode('&', $query);
-	foreach ($pairs as $pair) {
-		$v = explode('=', $pair);
-		if (is_array($v)) {
-			$key = urlencode($v[0]);
-			$val = urlencode(isset($v[1]) ? $v[1] : '');
-			$url .= "&$key=$val";
+	$path = isset($parts['path']) ? $parts['path'] : '';
+	if ($path === '' || $path[0] !== '/' || strncmp($path, '//', 2) === 0 ||
+		!preg_match('#^/[A-Za-z0-9._/-]+$#D', $path) || preg_match('#/{2,}#', $path)) {
+		return 'main.php';
+	}
+	foreach (explode('/', $path) as $segment) {
+		if ($segment === '.' || $segment === '..') {
+			return 'main.php';
 		}
 	}
-	if (preg_match("/^http:\/\/|^https:\/\/|^\//", $url) != 1)
-		$url = "main.php";
+	if (!nagios_path_is_within($path, $cgi_base_path) && !nagios_path_is_within($path, $html_base_path)) {
+		return 'main.php';
+	}
+
+	$url = $path;
+	if (!empty($parts['query'])) {
+		$pairs = array();
+		foreach (explode('&', $parts['query']) as $pair) {
+			if ($pair === '') {
+				continue;
+			}
+			$values = explode('=', $pair, 2);
+			$key = rawurlencode(rawurldecode($values[0]));
+			$value = rawurlencode(rawurldecode(isset($values[1]) ? $values[1] : ''));
+			$pairs[] = $key . '=' . $value;
+		}
+		if (count($pairs) > 0) {
+			$url .= '?' . implode('&', $pairs);
+		}
+	}
+
+	return $url;
 }
 
-$this_year = '2026';
-$theme = $cfg['theme'] ?? 'dark';
-if ($theme != 'dark' && $theme != 'light') {
+$url = 'main.php';
+$configured_cgi_path = isset($cfg['cgi_base_url']) ? parse_url($cfg['cgi_base_url'], PHP_URL_PATH) : '';
+$cgi_base_path = is_string($configured_cgi_path) && isset($configured_cgi_path[0]) && $configured_cgi_path[0] === '/' ? $configured_cgi_path : '/nagios/cgi-bin';
+$script_name = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '/nagios/index.php';
+$html_base_path = str_replace('\\', '/', dirname($script_name));
+if ('@COREWINDOW@' === 'yes' && isset($_GET['corewindow'])) {
+	$url = nagios_core_window_url($_GET['corewindow'], $cgi_base_path, $html_base_path);
+}
+
+$theme = isset($cfg['theme']) ? $cfg['theme'] : 'dark';
+if ($theme !== 'dark' && $theme !== 'light') {
 	$theme = 'dark';
 }
+
+$server_name = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'Nagios server';
+$escaped_server_name = htmlspecialchars($server_name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escaped_url = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
-
-<html class="<?= $theme ?>">
+<!doctype html>
+<html lang="en" class="<?php echo $theme; ?>" data-theme="<?php echo $theme; ?>" data-configured-theme="<?php echo $theme; ?>">
 <head>
-	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
-	<title>Nagios: <?php echo $_SERVER['SERVER_NAME']; ?></title>
-	<link rel="shortcut icon" href="images/favicon.ico" type="image/ico">
-
-	<style>
-		#root {
-			display: flex;
-			margin:0;
-		}
-
-		:root {
-			--border: #28303E
-		}
-
-		.light {
-			--border: #D6D6D6
-		}
-
-		iframe[name="side"] {
-			height: 100vh;
-			width: 200px;
-			border: none;
-			border-right: 1px solid var(--border);
-		}
-
-		iframe[name="main"] {
-			height: 100vh;
-			width: 100%;
-			border: none;
-		}
-	</style>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex, nofollow">
+	<meta name="referrer" content="same-origin">
+	<title>Nagios Core — <?php echo $escaped_server_name; ?></title>
+	<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" href="stylesheets/theme.css">
+	<link rel="stylesheet" href="stylesheets/shell.css">
+	<script src="js/shell.js" defer></script>
 </head>
+<body class="app-shell">
+	<a class="skip-link" href="#content-frame">Skip to monitoring content</a>
 
-<body id="root">
-	<iframe src="side.php" name="side"></iframe>
-	<iframe src="<?php echo $url; ?>" name="main"></iframe>
+	<header class="app-header">
+		<div class="app-header-start">
+			<button class="icon-button nav-toggle" id="nav-toggle" type="button" aria-controls="navigation-panel" aria-expanded="false">
+				<span class="menu-icon" aria-hidden="true"></span>
+				<span class="visually-hidden">Open navigation</span>
+			</button>
+			<a class="app-brand" href="main.php" target="main" aria-label="Nagios Core monitoring overview">
+				<span class="app-brand-mark" aria-hidden="true"></span>
+				<span class="app-brand-name">Nagios <strong>Core</strong></span>
+			</a>
+		</div>
+
+		<div class="app-header-end">
+			<span class="server-badge" title="Connected Nagios server">
+				<span class="server-indicator" aria-hidden="true"></span>
+				<span class="server-name"><?php echo $escaped_server_name; ?></span>
+			</span>
+			<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme">
+				<span class="theme-icon" aria-hidden="true"></span>
+				<span class="theme-label">Theme</span>
+			</button>
+		</div>
+	</header>
+
+	<div class="app-layout">
+		<button class="navigation-scrim" id="navigation-scrim" type="button" tabindex="-1" aria-label="Close navigation"></button>
+		<aside class="navigation-panel" id="navigation-panel" aria-label="Nagios navigation">
+			<iframe id="navigation-frame" src="side.php" name="side" title="Primary navigation"></iframe>
+		</aside>
+		<main class="content-panel" id="main-content">
+			<iframe id="content-frame" src="<?php echo $escaped_url; ?>" name="main" title="Monitoring workspace"></iframe>
+		</main>
+	</div>
+
+	<noscript>
+		<p class="noscript-message">JavaScript is disabled. Core monitoring and command forms still work, but the mobile menu and theme preference require JavaScript.</p>
+	</noscript>
 </body>
-
 </html>

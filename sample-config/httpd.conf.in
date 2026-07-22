@@ -5,12 +5,31 @@
 # configuration file.  Customize the paths, etc. as
 # needed to fit your system.
 
+# The web interface uses same-origin frames for navigation and CGI content.
+# These headers keep that contract while reducing content-sniffing, referrer,
+# framing, and browser-capability exposure. The legacy CGI views still contain
+# a small amount of inline behavior, so 'unsafe-inline' remains temporarily
+# scoped to scripts and styles for backwards compatibility.
+# Basic authentication credentials must only be sent over TLS in production.
+# Enable SSLRequireSSL in both protected Directory blocks after configuring
+# HTTPS on this virtual host or enforce HTTPS at the trusted reverse proxy.
+# TLS-terminating proxies must make HTTPS visible to the CGI environment as
+# HTTPS=on or REQUEST_SCHEME=https. Set that value only from trusted proxy
+# configuration; never trust an unsanitized client X-Forwarded-Proto header.
+
 ScriptAlias @cgiurl@ "@sbindir@"
 
 <Directory "@sbindir@">
 #  SSLRequireSSL
    Options ExecCGI
    AllowOverride None
+   <IfModule mod_headers.c>
+      Header always set X-Content-Type-Options "nosniff"
+      Header always set X-Frame-Options "SAMEORIGIN"
+      Header always set Referrer-Policy "same-origin"
+      Header always set Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+      Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; media-src 'self'; form-action 'self'; frame-src 'self' https://www.youtube-nocookie.com; frame-ancestors 'self'"
+   </IfModule>
    <IfVersion >= 2.3>
       <RequireAll>
          Require all granted
@@ -42,6 +61,13 @@ Alias @htmurl@ "@datadir@"
 #  SSLRequireSSL
    Options None
    AllowOverride None
+   <IfModule mod_headers.c>
+      Header always set X-Content-Type-Options "nosniff"
+      Header always set X-Frame-Options "SAMEORIGIN"
+      Header always set Referrer-Policy "same-origin"
+      Header always set Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+      Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; media-src 'self'; form-action 'self'; frame-src 'self' https://www.youtube-nocookie.com; frame-ancestors 'self'"
+   </IfModule>
    <IfVersion >= 2.3>
       <RequireAll>
          Require all granted

@@ -2083,7 +2083,7 @@ void display_context_help(const char *chid) {
 	if(!strcmp(chid, CONTEXTHELP_TAC))
 		icon = CONTEXT_HELP_ICON2;
 
-	printf("<a href='%s%s.html' target='cshw' onClick='javascript:window.open(\"%s%s.html\",\"cshw\",\"width=550,height=600,toolbar=0,location=0,status=0,resizable=1,scrollbars=1\");return true'><img src='%s%s' border=0 alt='Display context-sensitive help for this screen' title='Display context-sensitive help for this screen'></a>\n", url_context_help_path, chid, url_context_help_path, chid, url_images_path, icon);
+	printf("<a href='%s%s.html' target='cshw' rel='noopener' data-context-help><img src='%s%s' border=0 alt='Display context-sensitive help for this screen' title='Display context-sensitive help for this screen'></a>\n", url_context_help_path, chid, url_images_path, icon);
 
 	return;
 	}
@@ -2097,7 +2097,7 @@ void display_splunk_host_url(host *hst) {
 	if(hst == NULL)
 		return;
 
-	printf("<a href='%s?q=search %s' target='_blank'><img src='%s%s' alt='Splunk It' title='Splunk It' border='0'></a>\n", splunk_url, url_encode(hst->name), url_images_path, SPLUNK_SMALL_WHITE_ICON);
+	printf("<a href='%s?q=search %s' target='_blank' rel='noopener noreferrer'><img src='%s%s' alt='Splunk It' title='Splunk It' border='0'></a>\n", splunk_url, url_encode(hst->name), url_images_path, SPLUNK_SMALL_WHITE_ICON);
 
 	return;
 	}
@@ -2112,7 +2112,7 @@ void display_splunk_service_url(service *svc) {
 		return;
 
 	printf("<a href='%s?q=search %s%%20", splunk_url, url_encode(svc->host_name));
-	printf("%s' target='_blank'><img src='%s%s' alt='Splunk It' title='Splunk It' border='0'></a>\n", url_encode(svc->description), url_images_path, SPLUNK_SMALL_WHITE_ICON);
+	printf("%s' target='_blank' rel='noopener noreferrer'><img src='%s%s' alt='Splunk It' title='Splunk It' border='0'></a>\n", url_encode(svc->description), url_images_path, SPLUNK_SMALL_WHITE_ICON);
 
 	return;
 	}
@@ -2132,7 +2132,7 @@ void display_splunk_generic_url(char *buf, int icon) {
 
 	strip_splunk_query_terms(newbuf);
 
-	printf("<a href='%s?q=search %s' target='_blank'>", splunk_url, url_encode(newbuf));
+	printf("<a href='%s?q=search %s' target='_blank' rel='noopener noreferrer'>", splunk_url, url_encode(newbuf));
 	if(icon > 0)
 		printf("<img src='%s%s' alt='Splunk It' title='Splunk It' border='0'>", url_images_path, (icon == 1) ? SPLUNK_SMALL_WHITE_ICON : SPLUNK_SMALL_BLACK_ICON);
 	printf("</a>\n");

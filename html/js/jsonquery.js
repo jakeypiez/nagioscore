@@ -523,10 +523,10 @@ $( document).ready( function() {
 					var value = getValue( key, option);
 					if(( value == null) || ( value == "")) {
 						if( required) {
-							$('#results').append( 
+							$('#results').append(
 								$( '<p></p>').
 									addClass( 'error').
-									append( option.label + " missing")
+									text( option.label + " missing")
 							);
 						}
 					}
@@ -544,17 +544,18 @@ $( document).ready( function() {
 			var url = baseurl + '/cgi-bin/' + cginame + '?' + p
 			$('#results').append( 
 				$('<p></p>').text( 'URL: ').append(
-					$('<a></a>').attr({
-						href: url,
-						target: "_blank"
+						$('<a></a>').attr({
+							href: url,
+							target: "_blank",
+							rel: "noopener noreferrer"
 					}).text( url)
 				)
 			);
 			$.get( baseurl + '/cgi-bin/' + cginame, 
 				parameters, 
 				function(data, results) {
-					$('#results').append( 
-						$('<p></p>').html( objectToString( 0, data))
+					$('#results').append(
+						$('<pre></pre>').addClass('json-result').text(JSON.stringify(data, null, 2))
 					);
 				}
 			);

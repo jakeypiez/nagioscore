@@ -460,13 +460,8 @@ int main(void) {
 		sound = service_unknown_sound;
 	else if(problem_services_unknown == 0 && problem_services_warning == 0 && problem_services_critical == 0 && problem_hosts_down == 0 && problem_hosts_unreachable == 0 && normal_sound != NULL)
 		sound = normal_sound;
-	if(sound != NULL) {
-		printf("<object type=\"audio/x-wav\" data=\"%s%s\" height=\"1\" width=\"1\">", url_media_path, sound);
-		printf("<param name=\"filename\" value=\"%s%s\">", url_media_path, sound);
-		printf("<param name=\"autostart\" value=\"true\">");
-		printf("<param name=\"playcount\" value=\"1\">");
-		printf("</object>");
-		}
+	if(sound != NULL)
+		printf("<audio src=\"%s%s\" autoplay preload=\"auto\" hidden aria-hidden=\"true\"></audio>", url_media_path, sound);
 
 	/* Special case where there is a host with no services */
 	if(display_type == DISPLAY_HOSTS && num_services == 0 && num_hosts != 0 && display_header) {
@@ -539,6 +534,7 @@ void document_header(int use_stylesheet) {
 
 	printf("<html>\n");
 	printf("<head>\n");
+	printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 	printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 	printf("<title>\n");
 	printf("Current Network Status\n");
@@ -548,48 +544,39 @@ void document_header(int use_stylesheet) {
 		printf("<link rel='stylesheet' type='text/css' href='%s%s' />\n", url_stylesheets_path, COMMON_CSS);
 		printf("<link rel='stylesheet' type='text/css' href='%s%s' />\n", url_stylesheets_path, STATUS_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, NAGFUNCS_CSS);
+		printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+		printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
+		}
+
+	if (enable_page_tour == TRUE) {
+		if (display_type == DISPLAY_HOSTS)
+			vidurl = "https://www.youtube-nocookie.com/embed/ahDIJcbSEFM";
+		else if(display_type == DISPLAY_SERVICEGROUPS) {
+			if (group_style_type == STYLE_HOST_DETAIL)
+				vidurl = "https://www.youtube-nocookie.com/embed/nNiRr0hDZag";
+			else if (group_style_type == STYLE_OVERVIEW)
+				vidurl = "https://www.youtube-nocookie.com/embed/MyvgTKLyQhA";
+			}
+		else {
+			if (group_style_type == STYLE_OVERVIEW)
+				vidurl = "https://www.youtube-nocookie.com/embed/jUDrjgEDb2A";
+			else if (group_style_type == STYLE_HOST_DETAIL)
+				vidurl = "https://www.youtube-nocookie.com/embed/nNiRr0hDZag";
+			}
 		}
 
 	/* added jquery library 1/31/2012 */
 	printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, JQUERY_JS);
 	printf("<script type='text/javascript' src='%s%s'></script>\n", url_js_path, NAGFUNCS_JS);
-	/* JS function to append content to elements on page */
-	printf("<script type='text/javascript'>\n");
-	if (enable_page_tour == TRUE) {
-		printf("var vbox, vBoxId='status%d%d', vboxText = "
-				"'<a href=https://www.nagios.com/tours target=_blank>"
-				"Click here to watch the entire Nagios Core 4 Tour!</a>';\n",
-				display_type, group_style_type);
-		printf("$(document).ready(function() {\n"
-				"$('#top_page_numbers').append($('#bottom_page_numbers').html() );\n");
-		if (display_type == DISPLAY_HOSTS)
-			vidurl = "https://www.youtube.com/embed/ahDIJcbSEFM";
-		else if(display_type == DISPLAY_SERVICEGROUPS) {
-			if (group_style_type == STYLE_HOST_DETAIL)
-				vidurl = "https://www.youtube.com/embed/nNiRr0hDZag";
-			else if (group_style_type == STYLE_OVERVIEW)
-				vidurl = "https://www.youtube.com/embed/MyvgTKLyQhA";
-		} else {
-			if (group_style_type == STYLE_OVERVIEW)
-				vidurl = "https://www.youtube.com/embed/jUDrjgEDb2A";
-			else if (group_style_type == STYLE_HOST_DETAIL)
-				vidurl = "https://www.youtube.com/embed/nNiRr0hDZag";
-		}
-		if (vidurl) {
-			printf("var user = '%s';\nvBoxId += ';' + user;",
-				 current_authdata.username);
-			printf("vbox = new vidbox({pos:'lr',vidurl:'%s',text:vboxText,"
-					"vidid:vBoxId});\n", vidurl);
-		}
-		printf("});\n");
-		}
-	printf("function set_limit(url) { \nthis.location = url+'&limit='+$('#limit').val();\n  }\n");
-
-	printf("</script>\n");
 
 	printf("</head>\n");
 
-	printf("<body class='status'>\n");
+	printf("<body class='status'");
+	if (enable_page_tour == TRUE && vidurl != NULL)
+		printf(" data-page-tour-url='%s' data-page-tour-id='status%d%d' data-page-tour-user='%s'",
+				vidurl, display_type, group_style_type,
+				escape_string((current_authdata.username == NULL) ? "" : current_authdata.username));
+	printf(">\n");
 
 	/* include user SSI header */
 	include_ssi_files(STATUS_CGI, SSI_HEADER);
@@ -3550,7 +3537,7 @@ void show_servicegroup_grid(servicegroup *temp_servicegroup) {
 			process_macros_r(mac, temp_host->action_url, &processed_string, 0);
 			printf("%s", processed_string);
 			free(processed_string);
-			printf("' TARGET='%s'>", (action_url_target == NULL) ? "blank" : action_url_target);
+			printf("' TARGET='%s'>", (action_url_target == NULL) ? "_blank" : action_url_target);
 			printf("<IMG SRC='%s%s' border=0 WIDTH=%d HEIGHT=%d ALT='%s' TITLE='%s'>", url_images_path, ACTION_ICON, STATUS_ICON_WIDTH, STATUS_ICON_HEIGHT, "Perform Extra Host Actions", "Perform Extra Host Actions");
 			printf("</a>");
 			}
@@ -5606,7 +5593,7 @@ void create_page_limiter(int limit,char *temp_url) {
 	/*  Result Limit Select Box   */
 	printf("<div id='pagelimit'>\n<div id='result_limit'>\n");
 	printf("<label for='limit'>Limit Results: </label>\n");
-	printf("<select onchange='set_limit(\"%s\")' name='limit' id='limit'>\n",temp_url);
+	printf("<select data-limit-url='%s' name='limit' id='limit'>\n", temp_url);
 	printf("<option %s value='50'>50</option>\n",( (limit==50) ? "selected='selected'" : "") );
 	printf("<option %s value='100'>100</option>\n",( (limit==100) ? "selected='selected'" : "") );
 	printf("<option %s value='250'>250</option>\n",( (limit==250) ? "selected='selected'" : "") );
