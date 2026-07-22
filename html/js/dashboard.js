@@ -14,6 +14,16 @@
 		}
 	}
 
+	function statusAgeInSeconds(queryTime, lastUpdate) {
+		if (!Number.isFinite(queryTime) || !Number.isFinite(lastUpdate) || lastUpdate <= 0) {
+			return null;
+		}
+		// Current statusjson.cgi timestamps are milliseconds since the epoch.
+		// Older/custom endpoints may still return seconds, so support both forms.
+		var unitsPerSecond = Math.max(Math.abs(queryTime), Math.abs(lastUpdate)) > 100000000000 ? 1000 : 1;
+		return Math.max(0, (queryTime - lastUpdate) / unitsPerSecond);
+	}
+
 	function fetchStatus(query) {
 		return fetch(apiBase + '/statusjson.cgi?query=' + encodeURIComponent(query), {
 			credentials: 'same-origin',
@@ -32,10 +42,9 @@
 				}
 				var queryTime = Number(payload.result.query_time);
 				var lastUpdate = Number(payload.result.last_data_update);
-				if (!Number.isFinite(queryTime) || !Number.isFinite(lastUpdate) ||
-						lastUpdate <= 0 || queryTime - lastUpdate > maximumStatusAge) {
-					var age = Number.isFinite(queryTime - lastUpdate) ? Math.max(0, queryTime - lastUpdate) : null;
-					throw new Error(age === null ? 'Monitoring data freshness is unknown' : 'Monitoring data is stale (' + age + ' seconds old)');
+				var age = statusAgeInSeconds(queryTime, lastUpdate);
+				if (age === null || age > maximumStatusAge) {
+					throw new Error(age === null ? 'Monitoring data freshness is unknown' : 'Monitoring data is stale (' + Math.floor(age) + ' seconds old)');
 				}
 				return payload;
 			});

@@ -14,6 +14,21 @@ Visit the Nagios homepage at https://www.nagios.org for documentation,
 new releases, bug reports, information on discussion forums, and more.
 
 
+Modern frontend browser lab
+---------------------------
+This branch includes a Docker-based test environment for navigating the modern
+frontend from another browser on the same private network. With Docker Desktop
+running, start it from the repository root:
+
+```sh
+./scripts/nagios-lab up
+```
+
+The launcher prints the private-LAN URL and generated test credentials. See the
+[browser test lab guide](docker/lab/README.md) for security boundaries, sample
+monitoring data, custom ports, logs, and shutdown commands.
+
+
 [Features](https://www.nagios.org/about/features/)
 -----------------------------------------------
 * Monitoring of network services (via SMTP, POP3, HTTP, PING, etc).

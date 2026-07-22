@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+readonly root_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+readonly state_dir="$root_dir/.nagios-lab"
+readonly env_file="$state_dir/compose.env"
+readonly username_file="$state_dir/username"
+readonly password_file="$state_dir/password"
+readonly compose_file="$root_dir/compose.lab.yml"
+readonly container_name=nagios-modern-ui-lab
+
+usage() {
+    cat <<'EOF'
+Usage: scripts/nagios-lab <command>
+
+Commands:
+  up           Build and start the lab on this Mac's private LAN address
+  down         Stop and remove the lab container and network
+  status       Show container health and the browser address
+  logs         Follow Nagios and Apache logs
+  credentials  Show the locally generated test login
+  help         Show this help
+
+Optional environment overrides for `up`:
+  NAGIOS_LAB_BIND_IP=192.168.x.x
+  NAGIOS_LAB_PORT=8080
+EOF
+}
+
+fail() {
+    printf 'Error: %s\n' "$*" >&2
+    exit 1
+}
+
+detect_lan_ip() {
+    local interface ip
+    interface=$(route -n get default 2>/dev/null | awk '/interface:/{print $2; exit}')
+    [[ -n "$interface" ]] || fail 'could not detect the default network interface'
+    ip=$(ipconfig getifaddr "$interface" 2>/dev/null || true)
+    [[ -n "$ip" ]] || fail "could not detect an IPv4 address for $interface"
+    printf '%s\n' "$ip"
+}
+
+require_private_ipv4() {
+    local ip=$1 first second third fourth
+    IFS=. read -r first second third fourth <<< "$ip"
+    [[ "$first" =~ ^[0-9]+$ && "$second" =~ ^[0-9]+$ && "$third" =~ ^[0-9]+$ && "$fourth" =~ ^[0-9]+$ ]] \
+        || fail "$ip is not an IPv4 address"
+    (( first <= 255 && second <= 255 && third <= 255 && fourth <= 255 )) \
+        || fail "$ip is not a valid IPv4 address"
+    if (( first == 10 || (first == 172 && second >= 16 && second <= 31) || (first == 192 && second == 168) )); then
+        return 0
+    fi
+    fail "$ip is not an RFC1918 private address; refusing to expose the test lab"
+}
+
+require_port() {
+    local port=$1
+    [[ "$port" =~ ^[0-9]+$ ]] || fail "$port is not a valid TCP port"
+    (( port >= 1024 && port <= 65535 )) || fail 'choose a port between 1024 and 65535'
+}
+
+require_docker() {
+    command -v docker >/dev/null 2>&1 || fail 'Docker is not installed'
+    docker info >/dev/null 2>&1 || fail 'Docker Desktop is not running'
+    docker compose version >/dev/null 2>&1 || fail 'Docker Compose is unavailable'
+}
+
+initialize_state() {
+    local bind_ip port
+    bind_ip=${NAGIOS_LAB_BIND_IP:-$(detect_lan_ip)}
+    port=${NAGIOS_LAB_PORT:-8080}
+    require_private_ipv4 "$bind_ip"
+    require_port "$port"
+
+    mkdir -p "$state_dir"
+    chmod 0700 "$state_dir"
+    umask 0077
+
+    if [[ ! -s "$username_file" ]]; then
+        printf 'nagiosadmin\n' > "$username_file"
+    fi
+    if [[ ! -s "$password_file" ]]; then
+        command -v openssl >/dev/null 2>&1 || fail 'openssl is required to generate the lab password'
+        openssl rand -hex 16 > "$password_file"
+    fi
+    printf 'NAGIOS_LAB_BIND_IP=%s\nNAGIOS_LAB_PORT=%s\n' "$bind_ip" "$port" > "$env_file"
+}
+
+compose() {
+    docker compose --env-file "$env_file" --file "$compose_file" "$@"
+}
+
+show_access() {
+    [[ -s "$env_file" && -s "$username_file" && -s "$password_file" ]] \
+        || fail 'the lab has not been initialized; run scripts/nagios-lab up'
+    local bind_ip port
+    bind_ip=$(awk -F= '$1 == "NAGIOS_LAB_BIND_IP" {print $2}' "$env_file")
+    port=$(awk -F= '$1 == "NAGIOS_LAB_PORT" {print $2}' "$env_file")
+    printf 'URL:      http://%s:%s/nagios/\n' "$bind_ip" "$port"
+    printf 'Username: %s\n' "$(<"$username_file")"
+    printf 'Password: %s\n' "$(<"$password_file")"
+}
+
+wait_for_health() {
+    local attempt health
+    for attempt in {1..90}; do
+        health=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_name" 2>/dev/null || true)
+        case "$health" in
+            healthy)
+                return 0
+                ;;
+            unhealthy)
+                compose logs --tail=120
+                fail 'the Nagios lab became unhealthy'
+                ;;
+        esac
+        sleep 2
+    done
+    compose logs --tail=120
+    fail 'timed out waiting for the Nagios lab to become healthy'
+}
+
+command_name=${1:-help}
+case "$command_name" in
+    up)
+        require_docker
+        initialize_state
+        compose up --detach --build
+        wait_for_health
+        printf '\nNagios lab is healthy and available on the private LAN.\n'
+        show_access
+        ;;
+    down)
+        require_docker
+        [[ -s "$env_file" ]] || fail 'the lab has not been initialized'
+        compose down
+        ;;
+    status)
+        require_docker
+        [[ -s "$env_file" ]] || fail 'the lab has not been initialized'
+        compose ps
+        printf '\n'
+        show_access
+        ;;
+    logs)
+        require_docker
+        [[ -s "$env_file" ]] || fail 'the lab has not been initialized'
+        compose logs --follow
+        ;;
+    credentials)
+        show_access
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac
