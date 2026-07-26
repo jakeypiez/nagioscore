@@ -4,6 +4,7 @@ header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
 $this_version = '4.5.13';
+$asset_version = $this_version . '-modern-ui-2';
 $this_year = '2026';
 $release_date = 'May 28, 2026';
 $theme = isset($cfg['theme']) ? $cfg['theme'] : 'dark';
@@ -36,14 +37,14 @@ $maximum_status_age = max(120, ($status_update_interval * 2) + 30);
 	<meta name="robots" content="noindex, nofollow">
 	<meta name="referrer" content="same-origin">
 	<title>Nagios Core monitoring overview</title>
-	<link rel="stylesheet" href="stylesheets/common.css?<?php echo $this_version; ?>">
-	<link rel="stylesheet" href="stylesheets/nag_funcs.css?<?php echo $this_version; ?>">
-	<link rel="stylesheet" href="stylesheets/frontend.css?<?php echo $this_version; ?>">
-	<link rel="stylesheet" href="stylesheets/theme.css?<?php echo $this_version; ?>">
+	<link rel="stylesheet" href="stylesheets/common.css?<?php echo $asset_version; ?>">
+	<link rel="stylesheet" href="stylesheets/nag_funcs.css?<?php echo $asset_version; ?>">
+	<link rel="stylesheet" href="stylesheets/frontend.css?<?php echo $asset_version; ?>">
+	<link rel="stylesheet" href="stylesheets/theme.css?<?php echo $asset_version; ?>">
 	<script src="js/jquery-3.7.1.min.js" defer></script>
-	<script src="js/nag_funcs.js?<?php echo $this_version; ?>" defer></script>
-	<script src="js/coreui.js?<?php echo $this_version; ?>" defer></script>
-	<script src="js/dashboard.js?<?php echo $this_version; ?>" defer></script>
+	<script src="js/nag_funcs.js?<?php echo $asset_version; ?>" defer></script>
+	<script src="js/coreui.js?<?php echo $asset_version; ?>" defer></script>
+	<script src="js/dashboard.js?<?php echo $asset_version; ?>" defer></script>
 </head>
 <body id="splashpage" class="dashboard" data-api-base="<?php echo $cgi_base_url; ?>" data-status-max-age="<?php echo $maximum_status_age; ?>" data-tour-enabled="<?php echo $tour_enabled; ?>" data-tour-user="<?php echo $tour_user; ?>">
 	<header class="dashboard-header">

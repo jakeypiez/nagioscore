@@ -34,7 +34,7 @@
 	}
 
 	function enhanceLinks() {
-		document.querySelectorAll('a[target="_blank"]').forEach(function (link) {
+		document.querySelectorAll('a[target]:not([target="_self"]):not([target="_parent"]):not([target="_top"])').forEach(function (link) {
 			var rel = new Set((link.getAttribute('rel') || '').split(/\s+/).filter(Boolean));
 			rel.add('noopener');
 			rel.add('noreferrer');
@@ -56,6 +56,105 @@
 		});
 	}
 
+	function enhanceLegacyLayout() {
+		function outermostTable(element) {
+			var table = element.closest('table');
+			var parentTable;
+			while (table && table.parentElement) {
+				parentTable = table.parentElement.closest('table');
+				if (!parentTable) {
+					break;
+				}
+				table = parentTable;
+			}
+			return table;
+		}
+
+		[
+			['.perfBox', 'tac-performance-layout'],
+			['.healthBox', 'tac-health-layout']
+		].forEach(function (definition) {
+			document.querySelectorAll(definition[0]).forEach(function (panel) {
+				var table = outermostTable(panel);
+				if (table) {
+					table.classList.add(definition[1]);
+				}
+			});
+		});
+
+		document.querySelectorAll('.hostTitle, .serviceTitle, .featureTitle').forEach(function (title) {
+			var table = outermostTable(title);
+			if (table) {
+				table.classList.add('tac-section-table');
+			}
+		});
+
+		document.querySelectorAll('table.optBox').forEach(function (table) {
+			if (!table.querySelector('input:not([type="hidden"]), select, textarea, button, a')) {
+				table.classList.add('is-empty');
+			}
+		});
+
+		var directTables = Array.from(document.body.children).filter(function (element) {
+			return element.tagName === 'TABLE';
+		});
+		var pageHeader = directTables.find(function (table) {
+			return table.querySelector('.infoBox');
+		});
+		if (pageHeader) {
+			pageHeader.classList.add('legacy-page-header');
+		}
+
+		var heading = document.querySelector([
+			'.statusTitle',
+			'.dataTitle',
+			'.reportSelectTitle',
+			'.dateSelectTitle',
+			'.commandTitle',
+			'.queueTitle',
+			'.infoBoxTitle'
+		].join(','));
+		if (heading && !document.querySelector('h1')) {
+			heading.setAttribute('role', 'heading');
+			heading.setAttribute('aria-level', '1');
+		}
+
+		document.querySelectorAll('table.data, table.status, table.notifications, table.logEntries, table.queue, table.comment, table.downtime, body.tac table.tac-section-table').forEach(function (table) {
+			if (table.parentElement.classList.contains('table-scroll') || table.parentElement.closest('table')) {
+				return;
+			}
+			var wrapper = document.createElement('div');
+			var labelSource = table.querySelector('th') || heading;
+			var label = labelSource ? labelSource.textContent.trim().replace(/\s+/g, ' ') : 'Monitoring data';
+			wrapper.className = 'table-scroll';
+			wrapper.tabIndex = 0;
+			wrapper.setAttribute('role', 'region');
+			wrapper.setAttribute('aria-label', label || 'Monitoring data');
+			table.parentNode.insertBefore(wrapper, table);
+			wrapper.appendChild(table);
+		});
+
+		document.querySelectorAll('img[name="trendsimage"], img[name="histogramimage"], img[name="statusimage"], img[src*="createimage"]').forEach(function (image) {
+			if (!image.hasAttribute('alt')) {
+				image.alt = heading ? heading.textContent.trim() : 'Monitoring graph';
+			}
+			var wrapper = image.closest('.graph-scroll');
+			if (!wrapper && image.parentElement && image.parentElement.tagName === 'DIV') {
+				wrapper = image.parentElement;
+				wrapper.classList.add('graph-scroll');
+			}
+			if (!wrapper) {
+				wrapper = document.createElement('div');
+				wrapper.className = 'graph-scroll';
+				image.parentNode.insertBefore(wrapper, image);
+				wrapper.appendChild(image);
+			}
+			wrapper.tabIndex = 0;
+			wrapper.setAttribute('role', 'region');
+			wrapper.setAttribute('aria-label', image.alt || 'Scrollable monitoring graph');
+		});
+	}
+
 	function enhanceForms() {
 		var usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map(function (element) {
 			return element.id;
@@ -71,6 +170,14 @@
 				}
 				control.id = candidateId;
 				usedIds.add(candidateId);
+			}
+			if (!control.getAttribute('aria-label') && !document.querySelector('label[for="' + control.id + '"]')) {
+				var row = control.closest('tr');
+				var labelCell = row ? row.querySelector('.reportSelectSubTitle, .dateSelectSubTitle, .optBoxItem, .filterName') : null;
+				var labelText = labelCell ? labelCell.textContent.trim().replace(/:\s*$/, '') : '';
+				if (labelText) {
+					control.setAttribute('aria-label', labelText);
+				}
 			}
 		});
 
@@ -117,6 +224,7 @@
 	function initialise() {
 		applyTheme();
 		enhanceLinks();
+		enhanceLegacyLayout();
 		enhanceForms();
 		initialiseLegacyStatusControls();
 		initialisePageTour();

@@ -1186,7 +1186,7 @@ void show_host_info(void) {
 		printf("</TABLE>\n");
 		}
 	else if(is_authorized_for_read_only(&current_authdata) == TRUE) {
-		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>Your account does not have permissions to execute commands.<br>\n");
+		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>Your account does not have permissions to execute commands.</DIV>\n");
 		}
 	else {
 		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>It appears as though Nagios is not running, so commands are temporarily unavailable...<br>\n");
@@ -1529,7 +1529,7 @@ void show_service_info(void) {
 		printf("</table>\n");
 		}
 	else if(is_authorized_for_read_only(&current_authdata) == TRUE) {
-		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>Your account does not have permissions to execute commands.<br>\n");
+		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>Your account does not have permissions to execute commands.</DIV>\n");
 		}
 	else {
 		printf("<DIV CLASS='infoMessage'>It appears as though Nagios is not running, so commands are temporarily unavailable...<br>\n");
@@ -1648,12 +1648,6 @@ void show_hostgroup_info(void) {
 	printf("</DIV>\n");
 
 
-	printf("</div>\n");
-
-	printf("</TD>\n");
-
-
-
 	return;
 	}
 
@@ -1697,7 +1691,7 @@ void show_servicegroup_info() {
 
 	printf("<DIV CLASS='dataTitle'>Servicegroup Commands</DIV>\n");
 
-	if(nagios_process_state == STATE_OK) {
+	if(nagios_process_state == STATE_OK && is_authorized_for_read_only(&current_authdata) == FALSE) {
 
 		printf("<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=0 CLASS='command'>\n");
 		printf("<TR><TD>\n");
@@ -1725,6 +1719,9 @@ void show_servicegroup_info() {
 		printf("</TD></TR>\n");
 		printf("</TABLE>\n");
 		}
+	else if(is_authorized_for_read_only(&current_authdata) == TRUE) {
+		printf("<DIV ALIGN=CENTER CLASS='infoMessage'>Your account does not have permissions to execute commands.</DIV>\n");
+		}
 	else {
 		printf("<DIV CLASS='infoMessage'>It appears as though Nagios is not running, so commands are temporarily unavailable...<br>\n");
 		printf("Click <a href='%s?type=%d'>here</a> to view Nagios process information</DIV>\n", EXTINFO_CGI, DISPLAY_PROCESS_INFO);
@@ -1739,11 +1736,6 @@ void show_servicegroup_info() {
 	printf("</TD></TR>\n");
 	printf("</TABLE>\n");
 	printf("</DIV>\n");
-
-
-	printf("</div>\n");
-
-	printf("</TD>\n");
 
 
 	return;

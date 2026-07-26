@@ -1094,8 +1094,6 @@ void show_service_status_totals(void) {
 	printf("</td></tr>\n");
 	printf("</table>\n");
 
-	printf("</div>\n");
-
 	return;
 	}
 
@@ -1367,8 +1365,6 @@ void show_host_status_totals(void) {
 	printf("</td></tr>\n");
 	printf("</table>\n");
 
-	printf("</div>\n");
-
 	return;
 	}
 
@@ -1383,6 +1379,8 @@ void show_service_detail(void) {
 	char status[MAX_INPUT_BUFFER];
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char temp_url[MAX_INPUT_BUFFER];
+	char paging_url[MAX_INPUT_BUFFER];
+	size_t temp_url_len;
 	char *processed_string = NULL;
 	const char *status_class = "";
 	const char *status_bg_class = "";
@@ -1526,13 +1524,6 @@ void show_service_detail(void) {
 		strncat(temp_url, temp_buffer, sizeof(temp_url) - strlen(temp_url) - 1);
 		temp_url[sizeof(temp_url) - 1] = '\x0';
 		}
-	if(temp_result_limit) {
-		snprintf(temp_buffer, sizeof(temp_buffer) - 1, "&limit=%i", temp_result_limit);
-		temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
-		strncat(temp_url, temp_buffer, sizeof(temp_url) - strlen(temp_url) - 1);
-		temp_url[sizeof(temp_url) - 1] = '\x0';
-		}
-
 	if(use_sort) {
 		snprintf(temp_buffer, sizeof(temp_buffer) - 1, "&sorttype=%i", sort_type);
 		temp_buffer[sizeof(temp_buffer) - 1] = '\x0';
@@ -1550,8 +1541,14 @@ void show_service_detail(void) {
 		result_limit = temp_result_limit ? temp_result_limit : result_limit;
 	else
 		result_limit = 0;
+	snprintf(paging_url, sizeof(paging_url), "%s", temp_url);
 	/* select box to set result limit */
-	create_page_limiter(result_limit,temp_url);
+	create_page_limiter(result_limit,paging_url);
+	if(result_limit > 0) {
+		temp_url_len = strlen(temp_url);
+		if(temp_url_len < sizeof(temp_url))
+			snprintf(temp_url + temp_url_len, sizeof(temp_url) - temp_url_len, "&limit=%i", result_limit);
+		}
 
 	/* the main list of services */
 	printf("<table border=0 width=100%% class='status'>\n");
@@ -1683,7 +1680,7 @@ void show_service_detail(void) {
 		if(result_limit == 0)
 			limit_results = FALSE;
 
-		if( (limit_results == TRUE && show_service== TRUE)  && ( (total_entries < page_start) || (total_entries > (page_start + result_limit)) )  ) {
+		if( (limit_results == TRUE && show_service== TRUE)  && ( (total_entries < page_start) || (total_entries >= (page_start + result_limit)) )  ) {
 			total_entries++;
 			show_service = FALSE;
 			}
@@ -1697,8 +1694,8 @@ void show_service_detail(void) {
 
 			if(new_host == TRUE) {
 				if(strcmp(last_host, "")) {
-					printf("<tr><td colspan='6'></td></tr>\n");
-					printf("<tr><td colspan='6'></td></tr>\n");
+					printf("<tr><td colspan='7'></td></tr>\n");
+					printf("<tr><td colspan='7'></td></tr>\n");
 					}
 				}
 
@@ -2029,7 +2026,7 @@ void show_service_detail(void) {
 		}
 	else {
 		/* do page numbers if applicable */
-		create_pagenumbers(total_entries,temp_url,TRUE);
+		create_pagenumbers(total_entries,paging_url,TRUE);
 		}
 
 	return;
@@ -2275,7 +2272,7 @@ void show_host_detail(void) {
 		if(result_limit == 0)
 			limit_results = FALSE;
 
-		if( (limit_results == TRUE) && ( (total_entries < page_start) || (total_entries > (page_start + result_limit)) )  ) {
+		if((limit_results == TRUE) && (((total_entries - 1) < page_start) || ((total_entries - 1) >= (page_start + result_limit)))) {
 			continue;
 			}
 
@@ -3398,7 +3395,7 @@ void show_servicegroup_grid(servicegroup *temp_servicegroup) {
 	printf(" (<a href='%s?type=%d&servicegroup=%s'>%s</a>)</div>", EXTINFO_CGI, DISPLAY_SERVICEGROUP_INFO, url_encode(temp_servicegroup->group_name), temp_servicegroup->group_name);
 
 	printf("<table class='status' align='center'>\n");
-	printf("<tr><th class='status'>Host</th><th class='status'>Services</a></th><th class='status'>Actions</th></tr>\n");
+	printf("<tr><th class='status'>Host</th><th class='status'>Services</th><th class='status'>Actions</th></tr>\n");
 
 	/* find all hosts that have services that are members of the servicegroup */
 	last_host = NULL;
@@ -4640,7 +4637,7 @@ void show_hostgroup_grid(hostgroup *temp_hostgroup) {
 	printf(" (<a href='%s?type=%d&hostgroup=%s'>%s</a>)</div>", EXTINFO_CGI, DISPLAY_HOSTGROUP_INFO, url_encode(temp_hostgroup->group_name), temp_hostgroup->group_name);
 
 	printf("<table class='status' align='center'>\n");
-	printf("<tr><th class='status'>Host</th><th class='status'>Services</a></th><th class='status'>Actions</th></tr>\n");
+	printf("<tr><th class='status'>Host</th><th class='status'>Services</th><th class='status'>Actions</th></tr>\n");
 
 	/* find all the hosts that belong to the hostgroup */
 	for(temp_member = temp_hostgroup->members; temp_member != NULL; temp_member = temp_member->next) {
@@ -5540,51 +5537,65 @@ void show_filters(void) {
 
 void create_pagenumbers(int total_entries,char *temp_url,int type_service) {
 
-	int pages = 1;
 	int tmp_start;
 	int i, last_page;
+	int last_start;
+	int next_page;
 	int previous_page;
+	int first_result;
+	int last_result;
 
 	/* do page numbers if applicable */
 	if(result_limit > 0 && total_entries > result_limit) {
-		pages = (total_entries / result_limit);
-		last_page = pages;
-		if (total_entries % result_limit > 0)
-			++last_page;
+		last_page = (total_entries + result_limit - 1) / result_limit;
+		last_start = (last_page - 1) * result_limit;
 		previous_page = (page_start-result_limit) > 0 ? (page_start-result_limit) : 0;
+		next_page = page_start + result_limit;
 		printf("<div id='bottom_page_numbers'>\n");
 		printf("<div class='inner_numbers'>\n");
-		printf("<a href='%s&start=0&limit=%i' class='pagenumber' title='First Page'><img src='%s%s' height='15' width='15' alt='<<' /></a>\n",temp_url,result_limit,url_images_path,FIRST_PAGE_ICON);
-		printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Previous Page'><img src='%s%s' height='15' width='10' alt='<' /></a>\n",temp_url,previous_page,result_limit,url_images_path,PREVIOUS_PAGE_ICON);
+		if(page_start > 0) {
+			printf("<a href='%s&start=0&limit=%i' class='pagenumber' title='First Page'><img src='%s%s' height='15' width='15' alt='First page' /></a>\n",temp_url,result_limit,url_images_path,FIRST_PAGE_ICON);
+			printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Previous Page'><img src='%s%s' height='15' width='10' alt='Previous page' /></a>\n",temp_url,previous_page,result_limit,url_images_path,PREVIOUS_PAGE_ICON);
+			}
+		else {
+			printf("<span class='pagenumber is-disabled' aria-disabled='true'>First</span>\n");
+			printf("<span class='pagenumber is-disabled' aria-disabled='true'>Previous</span>\n");
+			}
 
 		for(i = 0; i < last_page; i++) {
 			tmp_start = (i * result_limit);
 			if(tmp_start == page_start)
-				printf("<div class='pagenumber current_page'> %i </div>\n",(i+1));
+				printf("<span class='pagenumber current_page' aria-current='page'>%i</span>\n",(i+1));
 			else
-				printf("<a class='pagenumber' href='%s&start=%i&limit=%i' title='Page %i'> %i </a>\n",temp_url,tmp_start,result_limit,(i+1),(i+1));
+				printf("<a class='pagenumber' href='%s&start=%i&limit=%i' title='Page %i'>%i</a>\n",temp_url,tmp_start,result_limit,(i+1),(i+1));
 			}
 
-		printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Next Page'><img src='%s%s' height='15' width='10' alt='>' /></a>\n",temp_url,(page_start+result_limit),result_limit,url_images_path,NEXT_PAGE_ICON);
-		printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Last Page'><img src='%s%s' height='15' width='15' alt='>>' /></a>\n",temp_url,((pages)*result_limit),result_limit,url_images_path,LAST_PAGE_ICON);
+		if(next_page < total_entries) {
+			printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Next Page'><img src='%s%s' height='15' width='10' alt='Next page' /></a>\n",temp_url,next_page,result_limit,url_images_path,NEXT_PAGE_ICON);
+			printf("<a href='%s&start=%i&limit=%i' class='pagenumber' title='Last Page'><img src='%s%s' height='15' width='15' alt='Last page' /></a>\n",temp_url,last_start,result_limit,url_images_path,LAST_PAGE_ICON);
+			}
+		else {
+			printf("<span class='pagenumber is-disabled' aria-disabled='true'>Next</span>\n");
+			printf("<span class='pagenumber is-disabled' aria-disabled='true'>Last</span>\n");
+			}
 		printf("</div> <!-- end inner_page_numbers div -->\n");
+		first_result = page_start + 1;
+		last_result = (page_start + result_limit > total_entries) ? total_entries : page_start + result_limit;
 		if(type_service == TRUE)
-			printf("<br /><div class='itemTotalsTitle'>Results %i - %i of %d Matching Services</div>\n</div>\n",page_start,((page_start+result_limit) > total_entries ? total_entries :(page_start+result_limit) ),total_entries );
+			printf("<div class='itemTotalsTitle'>Results %i - %i of %d Matching Services</div>\n",first_result,last_result,total_entries);
 		else
-			printf("<br /><div class='itemTotalsTitle'>Results %i - %i of %d Matching Hosts</div>\n\n",page_start,((page_start+result_limit) > total_entries ? total_entries :(page_start+result_limit) ),total_entries );
+			printf("<div class='itemTotalsTitle'>Results %i - %i of %d Matching Hosts</div>\n",first_result,last_result,total_entries);
 
 		printf("</div> <!-- end bottom_page_numbers div -->\n\n");
 		}
 	else {
+		first_result = total_entries > 0 ? 1 : 0;
 		if(type_service == TRUE)
-			printf("<br /><div class='itemTotalsTitle'>Results %i - %i of %d Matching Services</div>\n</div>\n",1,total_entries,total_entries);
+			printf("<div class='itemTotalsTitle'>Results %i - %i of %d Matching Services</div>\n",first_result,total_entries,total_entries);
 		else
-			printf("<br /><div class='itemTotalsTitle'>Results %i - %i of %d Matching Hosts</div>\n\n",1,total_entries,total_entries);
+			printf("<div class='itemTotalsTitle'>Results %i - %i of %d Matching Hosts</div>\n",first_result,total_entries,total_entries);
 
 		}
-
-	/* show total results displayed */
-	//printf("<br /><div class='itemTotalsTitle'>Results %i - %i of %d Matching Services</div>\n</div>\n",page_start,((page_start+result_limit) > total_entries ? total_entries :(page_start+result_limit) ),total_entries );
 
 	}
 

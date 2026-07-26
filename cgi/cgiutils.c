@@ -1662,10 +1662,10 @@ void display_info_table(const char *title, int refresh, authdata *current_authda
 	if(refresh == TRUE)
 		printf("Updated every %d seconds<br>\n", refresh_rate);
 
-	printf("Nagios&reg; Core&trade; %s - <A HREF='https://www.nagios.org' TARGET='_new' REL='nofollow' CLASS='homepageURL'>www.nagios.org</A><BR>\n", PROGRAM_VERSION);
+	printf("Nagios&reg; Core&trade; %s - <A HREF='https://www.nagios.org' TARGET='_blank' REL='nofollow noopener noreferrer' CLASS='homepageURL'>www.nagios.org</A><BR>\n", PROGRAM_VERSION);
 
 	if(current_authdata != NULL)
-		printf("Logged in as <i>%s</i><BR>\n", (!strcmp(current_authdata->username, "")) ? "?" : current_authdata->username);
+		printf("Logged in as <i>%s</i><BR>\n", (!strcmp(current_authdata->username, "")) ? "?" : html_encode(current_authdata->username, FALSE));
 
 	if(nagios_process_state != STATE_OK)
 		printf("<DIV CLASS='infoBoxBadProcStatus'>Warning: Monitoring process may not be running!<BR>Click <A HREF='%s?type=%d'>here</A> for more info.</DIV>", EXTINFO_CGI, DISPLAY_PROCESS_INFO);

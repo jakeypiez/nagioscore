@@ -6,6 +6,7 @@
 	var navToggle = document.getElementById('nav-toggle');
 	var navScrim = document.getElementById('navigation-scrim');
 	var navigationPanel = document.getElementById('navigation-panel');
+	var contentPanel = document.getElementById('main-content');
 	var navFrame = document.getElementById('navigation-frame');
 	var contentFrame = document.getElementById('content-frame');
 	var themeToggle = document.getElementById('theme-toggle');
@@ -61,6 +62,7 @@
 	function setNavigation(open) {
 		body.classList.toggle('nav-open', open);
 		var hidden = mobileNavigation.matches && !open;
+		var contentHidden = mobileNavigation.matches && open;
 		if (navigationPanel) {
 			navigationPanel.setAttribute('aria-hidden', hidden ? 'true' : 'false');
 			if ('inert' in navigationPanel) {
@@ -72,6 +74,12 @@
 				navFrame.setAttribute('tabindex', '-1');
 			} else {
 				navFrame.removeAttribute('tabindex');
+			}
+		}
+		if (contentPanel) {
+			contentPanel.setAttribute('aria-hidden', contentHidden ? 'true' : 'false');
+			if ('inert' in contentPanel) {
+				contentPanel.inert = contentHidden;
 			}
 		}
 		if (navToggle) {
@@ -136,7 +144,11 @@
 	}
 	if (navToggle) {
 		navToggle.addEventListener('click', function () {
-			setNavigation(!body.classList.contains('nav-open'));
+			var opening = !body.classList.contains('nav-open');
+			setNavigation(opening);
+			if (opening && navFrame) {
+				navFrame.focus();
+			}
 		});
 	}
 	if (navScrim) {

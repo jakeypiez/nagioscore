@@ -72,8 +72,8 @@ html[data-theme="dark"] {
   --nagios-purple-text: #eadcff;
   --nagios-purple-border: #a78bdb;
 
-  --nagios-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
-  --nagios-shadow-md: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --nagios-shadow-sm: none;
+  --nagios-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.22);
   --nagios-shadow-focus: 0 0 0 3px rgba(125, 211, 252, 0.28);
 
   --nagios-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont,
@@ -81,11 +81,11 @@ html[data-theme="dark"] {
   --nagios-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", monospace;
 
-  --nagios-radius-sm: 0.375rem;
-  --nagios-radius: 0.625rem;
-  --nagios-radius-lg: 0.875rem;
-  --nagios-control-height: 2.5rem;
-  --nagios-sidebar-width: 15.5rem;
+  --nagios-radius-sm: 0.25rem;
+  --nagios-radius: 0.4rem;
+  --nagios-radius-lg: 0.625rem;
+  --nagios-control-height: 2rem;
+  --nagios-sidebar-width: 14.25rem;
   --nagios-content-width: 96rem;
   --nagios-transition: 160ms ease;
 }
@@ -107,7 +107,7 @@ html[data-theme="light"] {
   --nagios-text: #243247;
   --nagios-text-strong: #0b1424;
   --nagios-text-muted: #4b5d74;
-  --nagios-text-subtle: #68778d;
+  --nagios-text-subtle: #607086;
   --nagios-link: #135fba;
   --nagios-link-hover: #0b478c;
 
@@ -151,8 +151,8 @@ html[data-theme="light"] {
   --nagios-purple-text: #54347d;
   --nagios-purple-border: #8766b1;
 
-  --nagios-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
-  --nagios-shadow-md: 0 14px 34px rgba(15, 23, 42, 0.12);
+  --nagios-shadow-sm: none;
+  --nagios-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
   --nagios-shadow-focus: 0 0 0 3px rgba(3, 105, 161, 0.2);
 }
 
@@ -180,13 +180,22 @@ html {
 body {
   min-block-size: 100%;
   margin: 0;
-  padding: 1.25rem;
+  padding: 0.75rem;
   overflow-wrap: anywhere;
   background: var(--nagios-canvas);
   color: var(--nagios-text);
   font-family: var(--nagios-font-sans);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+/*
+ * common.css historically assigns 8pt to every element. Reset that universal
+ * rule here so text follows the document scale unless a component below opts
+ * into a deliberate size.
+ */
+body * {
+  font-size: inherit;
 }
 
 body.status,
@@ -205,6 +214,22 @@ body.summary,
 body.trends {
   max-inline-size: var(--nagios-content-width);
   margin-inline: auto;
+  background: var(--nagios-canvas);
+  color: var(--nagios-text);
+}
+
+body.status,
+body.avail,
+body.tac {
+  margin-block: 0;
+  background: var(--nagios-canvas);
+  color: var(--nagios-text);
+}
+
+body.status div.status,
+body.tac table.tac {
+  background: transparent;
+  color: var(--nagios-text);
 }
 
 ::selection {
@@ -408,10 +433,10 @@ html#side,
 body.navbar {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.4rem;
   min-block-size: 100%;
   margin: 0;
-  padding: 1rem 0.875rem 2rem;
+  padding: 0.625rem 0.625rem 1rem;
   overflow-x: hidden;
   background:
     linear-gradient(180deg, var(--nagios-surface) 0, var(--nagios-canvas-elevated) 12rem);
@@ -420,9 +445,9 @@ body.navbar {
 .navbarlogo {
   display: flex;
   align-items: center;
-  min-block-size: 3.25rem;
+  min-block-size: 2.6rem;
   margin: 0;
-  padding: 0.25rem 0.5rem 0.8rem;
+  padding: 0.15rem 0.4rem 0.45rem;
   border-block-end: 1px solid var(--nagios-border);
 }
 
@@ -436,8 +461,8 @@ body.navbar {
 }
 
 .fulllogo {
-  inline-size: 8.75rem;
-  block-size: 2.45rem;
+  inline-size: 7.75rem;
+  block-size: 2.1rem;
 }
 
 .nlogo {
@@ -447,18 +472,18 @@ body.navbar {
 div.navsection {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.1rem;
   margin: 0;
 }
 
 div.navsectiontitle,
 .NavBarTitle {
   margin: 0;
-  padding: 0.55rem 0.625rem 0.35rem;
+  padding: 0.35rem 0.5rem 0.2rem;
   border: 0;
   background: transparent;
   color: var(--nagios-text-subtle);
-  font-size: 0.69rem;
+  font-size: 0.63rem;
   font-weight: 750;
   letter-spacing: 0.085em;
   text-transform: uppercase;
@@ -473,7 +498,7 @@ ul.navsectionlinks {
 ul.navsectionlinks {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 0.05rem;
   list-style: none;
 }
 
@@ -481,7 +506,7 @@ ul.navsectionlinks li,
 .NavBarItem {
   min-inline-size: 0;
   color: var(--nagios-text-muted);
-  font-size: 0.82rem;
+  font-size: 0.77rem;
   font-weight: 550;
 }
 
@@ -491,13 +516,13 @@ ul.navsectionlinks li a:visited,
 .NavBarItem a {
   display: flex;
   align-items: center;
-  min-block-size: 2.15rem;
-  padding: 0.42rem 0.625rem;
+  min-block-size: 1.7rem;
+  padding: 0.24rem 0.5rem;
   border: 1px solid transparent;
   border-radius: var(--nagios-radius-sm);
   background: transparent;
   color: var(--nagios-text);
-  font-size: 0.82rem;
+  font-size: 0.77rem;
   font-weight: 600;
   line-height: 1.25;
   text-decoration: none;
@@ -518,12 +543,20 @@ ul.navsectionlinks li a[aria-current="page"] {
   box-shadow: inset 3px 0 0 var(--nagios-accent);
 }
 
+body.navbar a:focus-visible,
+body.navbar button:focus-visible,
+body.navbar input:focus-visible {
+  outline: 2px solid var(--nagios-focus);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
 ul.navsectionlinks li ul {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  margin: 0.1rem 0 0.3rem;
-  padding: 0 0 0 0.75rem;
+  gap: 0;
+  margin: 0.05rem 0 0.15rem;
+  padding: 0 0 0 0.6rem;
   border-inline-start: 1px solid var(--nagios-border);
   list-style: none;
 }
@@ -531,11 +564,11 @@ ul.navsectionlinks li ul {
 ul.navsectionlinks li ul li a,
 ul.navsectionlinks li ul li a:link,
 ul.navsectionlinks li ul li a:visited {
-  min-block-size: 1.8rem;
-  padding-block: 0.3rem;
+  min-block-size: 1.45rem;
+  padding-block: 0.16rem;
   background: transparent;
   color: var(--nagios-text-muted);
-  font-size: 0.77rem;
+  font-size: 0.72rem;
   font-weight: 500;
 }
 
@@ -548,8 +581,8 @@ ul.navsectionlinks li ul li a[aria-current="page"] {
 }
 
 .navbarsearch {
-  margin-block-start: 0.3rem;
-  padding: 0.75rem 0.625rem;
+  margin-block-start: 0.15rem;
+  padding: 0.5rem;
   border: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius);
   background: var(--nagios-surface);
@@ -557,7 +590,7 @@ ul.navsectionlinks li ul li a[aria-current="page"] {
 
 .navbarsearch form {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.3rem;
   margin: 0;
   padding: 0;
   color: var(--nagios-text-muted);
@@ -862,12 +895,12 @@ html#main {
 .errorMessage,
 .errorDescription {
   inline-size: min(100%, 62rem);
-  margin: 0.75rem auto;
-  padding: 0.8rem 1rem;
+  margin: 0.45rem auto;
+  padding: 0.55rem 0.7rem;
   border: 1px solid;
   border-radius: var(--nagios-radius);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8rem;
+  line-height: 1.35;
   text-align: start;
   box-shadow: var(--nagios-shadow-sm);
 }
@@ -902,23 +935,23 @@ html#main {
 .helpfulHints,
 .reportSelectTip {
   display: block;
-  margin-block: 0.6rem;
+  margin-block: 0.35rem;
   color: var(--nagios-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-style: normal;
-  line-height: 1.5;
+  line-height: 1.35;
   text-align: center;
 }
 
-.infoBox,
+div.infoBox,
 table.infoBox,
-.linkBox,
+div.linkBox,
 table.linkBox,
-.filter,
+div.filter,
 table.filter,
-.optBox,
+div.optBox,
 table.optBox,
-.optionBox,
+div.optionBox,
 table.optionBox {
   border: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius);
@@ -941,7 +974,11 @@ td.linkBox,
 td.filter,
 td.optBox,
 td.optionBox {
-  padding: 0.65rem 0.75rem;
+  padding: 0.4rem 0.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .infoBoxTitle,
@@ -950,7 +987,7 @@ td.optionBox {
 .optionBoxTitle,
 .navBoxTitle {
   color: var(--nagios-text-strong);
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 750;
 }
 
@@ -959,8 +996,8 @@ td.optionBox {
 .navBoxDate,
 .navBoxFile {
   color: var(--nagios-text-muted);
-  font-size: 0.76rem;
-  line-height: 1.4;
+  font-size: 0.71rem;
+  line-height: 1.3;
 }
 
 .navBoxItem,
@@ -1008,7 +1045,7 @@ select,
 textarea {
   max-inline-size: 100%;
   min-block-size: var(--nagios-control-height);
-  padding: 0.48rem 0.65rem;
+  padding: 0.3rem 0.5rem;
   border: 1px solid var(--nagios-border-strong);
   border-radius: var(--nagios-radius-sm);
   background: var(--nagios-canvas-elevated);
@@ -1042,9 +1079,9 @@ textarea::placeholder {
 
 input[type="checkbox"],
 input[type="radio"] {
-  inline-size: 1.05rem;
-  block-size: 1.05rem;
-  margin: 0.2rem 0.35rem;
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  margin: 0.15rem 0.25rem;
   accent-color: var(--nagios-accent);
   vertical-align: middle;
 }
@@ -1054,7 +1091,7 @@ input[type="button"],
 input[type="submit"],
 input[type="reset"] {
   min-block-size: var(--nagios-control-height);
-  padding: 0.5rem 0.85rem;
+  padding: 0.32rem 0.65rem;
   border: 1px solid var(--nagios-accent);
   border-radius: var(--nagios-radius-sm);
   background: var(--nagios-accent);
@@ -1105,8 +1142,8 @@ textarea:disabled {
 .optBoxValue,
 .reportSelectItem,
 .dateSelectItem {
-  padding: 0.32rem 0.45rem;
-  font-size: 0.82rem;
+  padding: 0.22rem 0.35rem;
+  font-size: 0.76rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -1125,13 +1162,50 @@ table.queue,
 table.comment,
 table.downtime {
   max-inline-size: 100%;
-  margin-block: 0.75rem;
+  margin-block: 0.4rem;
   border: 1px solid var(--nagios-border);
   border-collapse: separate;
   border-spacing: 0;
   border-radius: var(--nagios-radius);
   background: var(--nagios-surface);
   box-shadow: var(--nagios-shadow-sm);
+}
+
+.table-scroll,
+.graph-scroll {
+  max-inline-size: 100%;
+  overflow: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll {
+  margin-block: 0.4rem;
+  border: 1px solid var(--nagios-border);
+  border-radius: var(--nagios-radius);
+  background: var(--nagios-surface);
+  box-shadow: var(--nagios-shadow-sm);
+}
+
+.table-scroll:focus-visible,
+.graph-scroll:focus-visible {
+  outline: 2px solid var(--nagios-focus);
+  outline-offset: 2px;
+}
+
+.table-scroll > table.data,
+.table-scroll > table.status,
+.table-scroll > table.notifications,
+.table-scroll > table.logEntries,
+.table-scroll > table.queue,
+.table-scroll > table.comment,
+.table-scroll > table.downtime,
+.table-scroll > table.tac {
+  margin-block: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 th.data,
@@ -1145,12 +1219,12 @@ td.hostHeader,
 td.serviceHeader,
 td.outageHeader,
 td.featureHeader {
-  padding: 0.6rem 0.7rem;
+  padding: 0.34rem 0.5rem;
   border: 0;
   border-block-end: 1px solid var(--nagios-border-strong);
   background: var(--nagios-surface-subtle);
   color: var(--nagios-text-strong);
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
   letter-spacing: 0.025em;
   line-height: 1.3;
@@ -1181,12 +1255,17 @@ td.downtime,
 .downtimeEven,
 .reportDataOdd,
 .reportDataEven {
-  padding: 0.5rem 0.7rem;
+  padding: 0.26rem 0.5rem;
   border: 0;
-  border-block-end: 1px solid var(--nagios-border);
   color: var(--nagios-text);
-  font-size: 0.79rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.table-scroll th,
+.table-scroll td {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .dataOdd,
@@ -1241,7 +1320,7 @@ table.downtime tr:hover > td {
 .downtimeTitle,
 .commandTitle,
 .perfTypeTitle {
-  margin-block: 0.6rem;
+  margin-block: 0.35rem;
   color: var(--nagios-text-strong);
   font-weight: 750;
   line-height: 1.25;
@@ -1254,14 +1333,14 @@ table.downtime tr:hover > td {
 .dateSelectTitle,
 .queueTitle,
 .downtimeTitle {
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-size: clamp(1rem, 1.75vw, 1.2rem);
 }
 
 .dataSubTitle,
 .commentTitle,
 .commandTitle,
 .perfTypeTitle {
-  font-size: 0.95rem;
+  font-size: 0.86rem;
 }
 
 .dateTimeBreak {
@@ -1431,6 +1510,20 @@ table.downtime tr:hover > td {
   font-weight: 650;
 }
 
+/* Keep severity colour and text, but avoid a heavy inset border on every cell. */
+table.status td[class*="status"],
+table.status th[class*="status"],
+table.notifications td,
+table.hostTotals [class*="Totals"],
+table.serviceTotals [class*="Totals"] {
+  box-shadow: none;
+}
+
+table.hostTotals [class*="Totals"],
+table.serviceTotals [class*="Totals"] {
+  border: 0 !important;
+}
+
 .statusOK a,
 .statusRECOVERY a,
 .statusHOSTUP a,
@@ -1462,7 +1555,7 @@ table.downtime tr:hover > td {
 table.headertable,
 table.pageTitle {
   inline-size: 100%;
-  margin-block-end: 0.75rem;
+  margin-block-end: 0.35rem;
 }
 
 .statusTitle {
@@ -1471,10 +1564,10 @@ table.pageTitle {
 
 .statusSort,
 .itemTotalsTitle {
-  margin-block: 0.35rem;
+  margin-block: 0.2rem;
   color: var(--nagios-text-muted);
-  font-size: 0.76rem;
-  line-height: 1.4;
+  font-size: 0.7rem;
+  line-height: 1.25;
   text-align: center;
 }
 
@@ -1486,26 +1579,26 @@ table.status {
 table.status th.status,
 table.status td.status,
 table.status td[class*="status"] {
-  min-block-size: 2.2rem;
+  min-block-size: 1.6rem;
   vertical-align: middle;
 }
 
 table.hostTotals,
 table.serviceTotals {
-  margin: 0.35rem auto;
-  border: 1px solid var(--nagios-border);
+  margin: 0.15rem auto;
+  border: 0;
   border-collapse: separate;
-  border-spacing: 0.25rem;
-  border-radius: var(--nagios-radius);
-  background: var(--nagios-surface);
-  box-shadow: var(--nagios-shadow-sm);
+  border-spacing: 0.1rem;
+  border-radius: var(--nagios-radius-sm);
+  background: var(--nagios-surface-subtle);
+  box-shadow: none;
 }
 
 div.hostTotals,
 div.serviceTotals {
-  margin-block-start: 0.5rem;
+  margin-block-start: 0.2rem;
   color: var(--nagios-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.69rem;
   font-weight: 750;
   letter-spacing: 0.04em;
   text-align: center;
@@ -1518,20 +1611,28 @@ td.hostTotals,
 td.serviceTotals,
 [class*="hostTotals"],
 [class*="serviceTotals"] {
-  min-inline-size: 3.25rem;
-  padding: 0.38rem 0.55rem;
-  border: 1px solid var(--nagios-border);
-  border-radius: var(--nagios-radius-sm);
-  background: var(--nagios-surface-raised);
+  min-inline-size: 2.8rem;
+  padding: 0.22rem 0.4rem;
+  border: 0;
+  border-radius: 0.2rem;
+  background: transparent;
   color: var(--nagios-text);
-  font-size: 0.74rem;
+  font-size: 0.69rem;
   text-align: center;
 }
 
+th.hostTotals,
+th.serviceTotals,
+th.hostTotals a,
+th.serviceTotals a {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
 [class*="miniStatus"] {
-  padding: 0.25rem 0.42rem;
-  border: 1px solid var(--nagios-border);
-  border-radius: 0.25rem;
+  padding: 0.18rem 0.32rem;
+  border: 0;
+  border-radius: 0.2rem;
   text-align: center;
 }
 
@@ -1551,13 +1652,18 @@ table.filter {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.25rem;
+  gap: 0.15rem;
   flex-wrap: wrap;
   float: none;
   clear: both;
-  min-block-size: 2rem;
+  min-block-size: 1.55rem;
   color: var(--nagios-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.69rem;
+}
+
+#pagelimit,
+#bottom_page_numbers {
+  margin-block: 0.2rem !important;
 }
 
 .pagenumber,
@@ -1566,16 +1672,22 @@ a.pagenumber {
   align-items: center;
   justify-content: center;
   float: none;
-  min-inline-size: 2rem;
-  min-block-size: 2rem;
+  min-inline-size: 1.65rem;
+  min-block-size: 1.65rem;
   height: auto;
   margin: 0;
-  padding: 0.25rem 0.45rem;
+  padding: 0.18rem 0.35rem;
   border: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius-sm);
   background: var(--nagios-surface);
   color: var(--nagios-link);
   text-decoration: none;
+}
+
+.pagenumber.is-disabled {
+  color: var(--nagios-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 a.pagenumber:hover,
@@ -1593,8 +1705,8 @@ a.pagenumber:hover,
 }
 
 #limit {
-  min-block-size: 2rem;
-  padding-block: 0.25rem;
+  min-block-size: 1.7rem;
+  padding-block: 0.15rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -1602,7 +1714,94 @@ a.pagenumber:hover,
  * -------------------------------------------------------------------------- */
 
 body.tac {
-  font-size: 0.84rem;
+  font-size: 0.78rem;
+}
+
+body.tac > p {
+  margin-block: 0.45rem;
+}
+
+body.tac > p > table,
+body.tac > p > table.tac,
+body.tac > table,
+body.tac .tac-performance-layout,
+body.tac .tac-health-layout,
+body.tac .tac-section-table {
+  inline-size: 100% !important;
+}
+
+body.tac .tac-section-table {
+  table-layout: fixed;
+}
+
+body.tac table.tac {
+  margin: 0;
+  border: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--nagios-text);
+  box-shadow: none;
+}
+
+body.tac a,
+body.tac a:link,
+body.tac a:visited {
+  color: var(--nagios-link);
+}
+
+body.tac table.infoBox {
+  background: var(--nagios-surface);
+  color: var(--nagios-text);
+}
+
+body.tac .healthItem,
+body.tac .perfItem,
+body.tac .perfValue {
+  background: transparent;
+  color: var(--nagios-text);
+}
+
+body.tac .healthItem a,
+body.tac .perfItem a,
+body.tac .perfValue a,
+body.tac .perfTitle a,
+body.tac .hostHeader a,
+body.tac .serviceHeader a,
+body.tac .outageHeader a,
+body.tac [class*="featureItem"] a {
+  color: inherit;
+}
+
+body.tac .tac-performance-layout > tbody > tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+
+body.tac .tac-performance-layout > tbody > tr > td,
+body.tac .tac-health-layout > tbody > tr > td {
+  inline-size: auto !important;
+}
+
+body.tac .tac-performance-layout > tbody > tr > td:first-child:not(:has(*)) {
+  display: none;
+}
+
+body.tac .tac-health-layout > tbody > tr {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: start;
+}
+
+body.tac .tac-performance-layout > tbody > tr > td > table,
+body.tac .tac-performance-layout > tbody > tr > td > p > table,
+body.tac .tac-health-layout > tbody > tr > td > table,
+body.tac .tac-health-layout > tbody > tr > td > p > table {
+  inline-size: 100% !important;
 }
 
 .title,
@@ -1618,12 +1817,13 @@ body.tac {
 .outageTitle,
 td.perfTitle,
 .perfTitle {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--nagios-border);
-  border-radius: var(--nagios-radius-sm) var(--nagios-radius-sm) 0 0;
+  padding: 0.34rem 0.5rem;
+  border: 0;
+  border-block-end: 1px solid var(--nagios-border);
+  border-radius: 0;
   background: var(--nagios-surface-subtle);
   color: var(--nagios-text-strong);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 750;
   text-align: start;
 }
@@ -1634,11 +1834,11 @@ td.perfTitle,
 .serviceBox,
 .outageBox,
 .perfBox {
-  padding: 0.55rem;
-  border: 1px solid var(--nagios-border);
-  border-radius: var(--nagios-radius);
+  padding: 0.3rem;
+  border: 0;
+  border-radius: 0;
   background: var(--nagios-surface);
-  box-shadow: var(--nagios-shadow-sm);
+  box-shadow: none;
 }
 
 .healthItem,
@@ -1648,19 +1848,24 @@ td.perfTitle,
 .outageItem,
 .perfItem,
 .perfValue {
-  padding: 0.32rem 0.45rem;
+  padding: 0.2rem 0.32rem;
   color: var(--nagios-text);
-  font-size: 0.76rem;
+  font-size: 0.71rem;
 }
 
 .healthBar {
   min-block-size: 0.8rem;
-  padding: 0.2rem 0.3rem;
+  padding: 0;
   overflow: hidden;
   border: 1px solid var(--nagios-border-strong);
   border-radius: 999px;
   background: var(--nagios-pending-bg);
   color: var(--nagios-text-strong);
+}
+
+.healthBar img {
+  display: block;
+  block-size: 14px;
 }
 
 [class^="featureEnabled"],
@@ -1711,11 +1916,11 @@ td.perfTitle,
 [class^="featureItemDisabled"],
 [class*="featureItemHosts"],
 [class*="featureItemServices"] {
-  padding: 0.35rem 0.45rem;
-  border: 1px solid;
-  border-radius: var(--nagios-radius-sm);
-  font-size: 0.72rem;
-  line-height: 1.3;
+  padding: 0.2rem 0.3rem;
+  border: 0;
+  border-radius: 0.2rem;
+  font-size: 0.67rem;
+  line-height: 1.2;
   text-align: center;
 }
 
@@ -1761,6 +1966,7 @@ td.perfTitle,
 .commentPanel,
 .downtimePanel {
   margin-block: 0.75rem;
+  background: transparent;
   color: var(--nagios-text);
   font-size: 0.82rem;
 }
@@ -1927,6 +2133,68 @@ body.showlog table.optBox,
 body.notifications table.optBox {
   margin: 0.75rem auto;
   padding: 0.55rem;
+}
+
+table.optBox.is-empty,
+table.optBox:not(:has(input:not([type="hidden"]), select, textarea, button, a)) {
+  display: none;
+}
+
+.reportSelectTitle {
+  inline-size: min(100%, 32rem);
+  margin: clamp(0.75rem, 3vh, 2rem) auto 0;
+  padding: 0.75rem 0.85rem 0.35rem;
+  border: 1px solid var(--nagios-border);
+  border-block-end: 0;
+  border-radius: var(--nagios-radius-lg) var(--nagios-radius-lg) 0 0;
+  background: var(--nagios-surface);
+}
+
+.reportSelectTitle + br {
+  display: none;
+}
+
+.reportSelectTitle + br + div[align="center"] {
+  inline-size: min(100%, 32rem);
+  margin-inline: auto;
+  padding: 0.35rem 0.85rem 0.75rem;
+  border: 1px solid var(--nagios-border);
+  border-block-start: 0;
+  border-radius: 0 0 var(--nagios-radius-lg) var(--nagios-radius-lg);
+  background: var(--nagios-surface);
+  box-shadow: none;
+}
+
+div.logEntries {
+  inline-size: min(100%, 78rem);
+  margin: 0.5rem auto;
+  padding: 0.45rem 0.6rem 0.6rem;
+  border: 1px solid var(--nagios-border);
+  border-radius: var(--nagios-radius);
+  background: var(--nagios-surface);
+  box-shadow: var(--nagios-shadow-sm);
+}
+
+.graph-scroll {
+  margin-block: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--nagios-border);
+  border-radius: var(--nagios-radius);
+  background: var(--nagios-surface-raised);
+  box-shadow: var(--nagios-shadow-sm);
+  text-align: center;
+}
+
+img[name="trendsimage"],
+img[name="histogramimage"],
+img[name="statusimage"],
+img[src*="createimage"] {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--nagios-border-strong), var(--nagios-shadow-sm);
+}
+
+html.dark img[alt^="Sort by"] {
+  filter: invert(1) brightness(1.25);
 }
 
 body.config table.data,
@@ -2248,7 +2516,7 @@ div.vidbox_lr {
   display: grid;
   place-items: center;
   min-inline-size: 8rem;
-  min-block-size: 2.5rem;
+  min-block-size: 1.9rem;
   block-size: auto;
   border: 1px solid var(--nagios-border-strong);
   border-radius: var(--nagios-radius-sm) var(--nagios-radius-sm) 0 0;
@@ -2259,8 +2527,36 @@ div.vidbox_lr {
   box-shadow: var(--nagios-shadow-sm);
 }
 
+.vidboxTab_lr,
+.vidboxTab_ll,
+.vidboxTab_ur,
+.vidboxTab_ul {
+  inset-block-start: auto;
+  inset-block-end: 0.75rem;
+  inset-inline-start: auto;
+  inset-inline-end: 0.75rem;
+  min-inline-size: auto;
+  inline-size: auto;
+  min-block-size: 1.9rem;
+  block-size: auto;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--nagios-border-strong);
+  border-radius: 999px;
+  line-height: 1.2 !important;
+  font-size: 0.7rem;
+  transform: none;
+}
+
+.vidboxTab_lr:active,
+.vidboxTab_ll:active,
+.vidboxTab_ur:active,
+.vidboxTab_ul:active {
+  transform: none;
+}
+
 .vidboxFrame {
   max-inline-size: calc(100vw - 2rem);
+  max-block-size: calc(100dvh - 2rem);
   overflow: auto;
   border: 1px solid var(--nagios-border-strong);
   border-radius: var(--nagios-radius);
@@ -2275,7 +2571,10 @@ div.vidbox_lr {
 
 .vidboxIframe {
   display: block;
+  inline-size: 100%;
   max-inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 16 / 9;
   margin-inline: auto;
   border: 0;
 }
@@ -2350,7 +2649,6 @@ div.vidbox_lr {
 
   ul.navsectionlinks li a {
     padding-inline: 0.45rem;
-    font-size: 0.76rem;
   }
 
   #splashpage {
@@ -2380,9 +2678,37 @@ div.vidbox_lr {
   }
 
   .headertable,
+  .legacy-page-header,
   table.pageTitle {
-    inline-size: max-content;
-    min-inline-size: 100%;
+    display: block;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .headertable > tbody,
+  .legacy-page-header > tbody,
+  table.pageTitle > tbody,
+  .headertable > tbody > tr,
+  .legacy-page-header > tbody > tr,
+  table.pageTitle > tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    inline-size: 100%;
+  }
+
+  .headertable > tbody > tr > td,
+  .legacy-page-header > tbody > tr > td,
+  table.pageTitle > tbody > tr > td {
+    display: block;
+    inline-size: 100% !important;
+    text-align: start;
+  }
+
+  .headertable > tbody > tr > td:not(:has(*)),
+  .legacy-page-header > tbody > tr > td:not(:has(*)),
+  table.pageTitle > tbody > tr > td:not(:has(*)) {
+    display: none;
   }
 
   table.data,
@@ -2407,9 +2733,39 @@ div.vidbox_lr {
   body.notifications,
   body.outages,
   body.showlog,
+  body.statusmap,
   body.summary,
   body.trends {
     overflow-x: auto;
+  }
+
+  body.tac .tac-performance-layout > tbody > tr,
+  body.tac .tac-health-layout > tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.tac .tac-performance-layout > tbody > tr > td:first-child:not(:has(*)) {
+    display: none;
+  }
+
+  body.tac .table-scroll > table.tac:has(.hostTitle) {
+    min-inline-size: 32rem;
+  }
+
+  body.tac .table-scroll > table.tac:has(.serviceTitle),
+  body.tac .table-scroll > table.tac:has(.featureTitle) {
+    min-inline-size: 40rem;
+  }
+
+  body.tac table.tac th,
+  body.tac table.tac td {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .graph-scroll {
+    text-align: start;
   }
 
   .reportSelectSubTitle,
@@ -2418,6 +2774,20 @@ div.vidbox_lr {
   .optBoxRequiredItem {
     white-space: normal;
   }
+
+  div.vidboxContainer {
+    position: static !important;
+    max-inline-size: 100%;
+  }
+
+  .vidboxTab_lr,
+  .vidboxTab_ll,
+  .vidboxTab_ur,
+  .vidboxTab_ul {
+    position: static !important;
+    float: none !important;
+    margin: 1rem 0 0 auto;
+  }
 }
 
 @media (max-width: 32rem) {
@@ -2425,7 +2795,7 @@ div.vidbox_lr {
     --nagios-sidebar-width: 9.5rem;
   }
 
-  html {
+  html:not(#side) {
     font-size: 15px;
   }
 
@@ -2449,6 +2819,24 @@ div.vidbox_lr {
 
   #currentversioninfo .checkforupdates {
     inline-size: 100%;
+  }
+
+  table.hostTotals,
+  table.serviceTotals {
+    inline-size: 100%;
+    table-layout: fixed;
+    border-spacing: 0.15rem;
+  }
+
+  th.hostTotals,
+  th.serviceTotals,
+  td.hostTotals,
+  td.serviceTotals,
+  [class*="hostTotals"],
+  [class*="serviceTotals"] {
+    min-inline-size: 0;
+    padding: 0.3rem 0.2rem;
+    font-size: 0.68rem;
   }
 
   #cgiform tr,
@@ -2475,8 +2863,8 @@ div.vidbox_lr {
 .navbar-brand {
   display: flex;
   align-items: center;
-  min-block-size: 3.25rem;
-  padding: 0.25rem 0.5rem 0.8rem;
+  min-block-size: 2.6rem;
+  padding: 0.15rem 0.4rem 0.45rem;
   border-block-end: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius-sm);
 }
@@ -2489,23 +2877,23 @@ div.vidbox_lr {
   display: flex;
   flex: 1 0 auto;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
 .navsection {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.1rem;
   margin: 0;
 }
 
 .navsection .navsectiontitle {
   margin: 0;
-  padding: 0.55rem 0.625rem 0.35rem;
+  padding: 0.32rem 0.5rem 0.18rem;
   border: 0;
   background: transparent;
   color: var(--nagios-text-subtle);
-  font-size: 0.69rem;
+  font-size: 0.63rem;
   font-weight: 750;
   letter-spacing: 0.085em;
   line-height: 1.2;
@@ -2515,10 +2903,10 @@ div.vidbox_lr {
 .nav-group-label {
   display: flex;
   align-items: center;
-  min-block-size: 2rem;
-  padding: 0.35rem 0.625rem;
+  min-block-size: 1.55rem;
+  padding: 0.2rem 0.5rem;
   color: var(--nagios-text-muted);
-  font-size: 0.77rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
@@ -2534,20 +2922,20 @@ ul.navsectionlinks li.nav-link-row > a:first-child {
 }
 
 ul.navsectionlinks li a.nav-chip {
-  min-block-size: 1.55rem;
-  padding: 0.2rem 0.42rem;
+  min-block-size: 1.3rem;
+  padding: 0.1rem 0.3rem;
   border-color: var(--nagios-critical-border);
   border-radius: 999px;
   background: var(--nagios-critical-surface);
   color: var(--nagios-critical-text);
-  font-size: 0.63rem;
+  font-size: 0.58rem;
   font-weight: 750;
 }
 
 form.navbarsearch {
   display: grid;
-  gap: 0.45rem;
-  margin-block-start: 0.35rem;
+  gap: 0.3rem;
+  margin-block-start: 0.15rem;
   color: var(--nagios-text-muted);
   font-size: 0.75rem;
 }
@@ -2564,7 +2952,7 @@ form.navbarsearch label {
   align-items: center;
   gap: 0.45rem;
   margin-block-start: auto;
-  padding: 0.75rem 0.625rem 0;
+  padding: 0.45rem 0.5rem 0;
   border-block-start: 1px solid var(--nagios-border);
   color: var(--nagios-text-subtle);
   font-size: 0.68rem;
@@ -2577,22 +2965,22 @@ form.navbarsearch label {
 #splashpage.dashboard {
   inline-size: min(100%, 96rem);
   margin-inline: auto;
-  padding: clamp(1.25rem, 3vw, 2.5rem);
+  padding: clamp(0.9rem, 2vw, 1.5rem);
 }
 
 .dashboard-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1.5rem;
-  margin: 0 0 1.5rem;
-  padding: 0 0 1.5rem;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0 0 0.75rem;
   border-block-end: 1px solid var(--nagios-border);
 }
 
 .dashboard-header h1 {
   margin: 0.2rem 0 0;
-  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
   letter-spacing: -0.04em;
 }
 
@@ -2603,17 +2991,17 @@ form.navbarsearch label {
 
 .dashboard-intro {
   max-inline-size: 44rem;
-  margin: 0.7rem 0 0;
+  margin: 0.4rem 0 0;
   color: var(--nagios-text-muted);
-  font-size: clamp(0.95rem, 1.5vw, 1.08rem);
+  font-size: clamp(0.82rem, 1.2vw, 0.95rem);
 }
 
 .version-panel {
   display: grid;
   flex: 0 0 auto;
-  gap: 0.25rem;
-  min-inline-size: 13.5rem;
-  padding: 0.85rem 1rem;
+  gap: 0.18rem;
+  min-inline-size: 12rem;
+  padding: 0.55rem 0.65rem;
   border: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius);
   background: var(--nagios-surface);
@@ -2634,7 +3022,7 @@ form.navbarsearch label {
 
 #splashpage.dashboard #updateversioninfo {
   inline-size: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 0.6rem;
 }
 
 #splashpage.dashboard .updatechecksdisabled,
@@ -2649,14 +3037,15 @@ form.navbarsearch label {
 
 .metric-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-block: 1rem 2.25rem;
+  gap: 0.6rem;
+  margin-block: 0.6rem 1.2rem;
 }
 
 .metric-card {
   display: flex;
   flex-direction: column;
-  min-block-size: 15.25rem;
-  padding: 1.15rem;
+  min-block-size: 10.75rem;
+  padding: 0.72rem;
   text-align: start;
   transition: border-color var(--nagios-transition), transform var(--nagios-transition), box-shadow var(--nagios-transition);
 }
@@ -2670,9 +3059,9 @@ form.navbarsearch label {
 .metric-heading {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.45rem;
   color: var(--nagios-text-muted);
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -2681,8 +3070,8 @@ form.navbarsearch label {
 .metric-icon {
   display: inline-grid;
   place-items: center;
-  inline-size: 2rem;
-  block-size: 2rem;
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
   border: 1px solid var(--nagios-border);
   border-radius: 0.55rem;
   background: var(--nagios-surface-subtle);
@@ -2712,8 +3101,8 @@ form.navbarsearch label {
 }
 
 .metric-card .metric-value {
-  margin: 1.25rem 0 0.35rem;
-  font-size: clamp(2rem, 5vw, 3rem);
+  margin: 0.65rem 0 0.25rem;
+  font-size: clamp(1.6rem, 4vw, 2.35rem);
   line-height: 1;
 }
 
@@ -2721,18 +3110,18 @@ form.navbarsearch label {
 .metric-card .metric-status {
   display: flex;
   align-items: center;
-  min-block-size: 3rem;
+  min-block-size: 2.15rem;
   padding: 0;
   border: 0;
   background: transparent;
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-size: clamp(1.05rem, 2vw, 1.4rem);
   line-height: 1.15;
 }
 
 .metric-detail {
   margin: 0.25rem 0 0;
   color: var(--nagios-text-subtle);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
 }
 
 .status-dot,
@@ -2763,12 +3152,12 @@ form.navbarsearch label {
 .state-summary {
   display: flex;
   align-items: center;
-  gap: 0.4rem 0.8rem;
+  gap: 0.25rem 0.55rem;
   flex-wrap: wrap;
-  margin: 0.45rem 0 1rem;
+  margin: 0.3rem 0 0.55rem;
   padding: 0;
   color: var(--nagios-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   list-style: none;
 }
 
@@ -2790,9 +3179,9 @@ form.navbarsearch label {
   justify-content: space-between;
   gap: 0.75rem;
   margin-block-start: auto;
-  padding-block-start: 0.85rem;
+  padding-block-start: 0.5rem;
   border-block-start: 1px solid var(--nagios-border);
-  font-size: 0.79rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -2806,12 +3195,12 @@ form.navbarsearch label {
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
-  margin-block-end: 1rem;
+  margin-block-end: 0.6rem;
 }
 
 .section-heading h2 {
   margin: 0.2rem 0 0;
-  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
 }
 
 .section-heading > a {
@@ -2823,15 +3212,15 @@ form.navbarsearch label {
 .action-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .action-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  min-block-size: 7.5rem;
-  padding: 1rem;
+  gap: 0.25rem;
+  min-block-size: 5.25rem;
+  padding: 0.65rem;
   border: 1px solid var(--nagios-border);
   border-radius: var(--nagios-radius);
   background: var(--nagios-surface);
@@ -2851,13 +3240,13 @@ form.navbarsearch label {
 
 .action-card strong {
   color: var(--nagios-text-strong);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
 }
 
 .action-card span {
   color: var(--nagios-text-muted);
-  font-size: 0.77rem;
-  line-height: 1.5;
+  font-size: 0.71rem;
+  line-height: 1.35;
 }
 
 @media (max-width: 900px) {
@@ -2892,14 +3281,6 @@ form.navbarsearch label {
     grid-column: auto;
   }
 
-  ul.navsectionlinks li.nav-link-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  ul.navsectionlinks li a.nav-chip {
-    justify-self: start;
-    margin: -0.2rem 0 0.3rem 0.625rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2912,12 +3293,6 @@ form.navbarsearch label {
     transition-duration: 0.01ms !important;
   }
 
-  .vidboxTab_ul,
-  .vidboxTab_ur,
-  .vidboxTab_ll,
-  .vidboxTab_lr {
-    transform: none;
-  }
 }
 
 @media (forced-colors: active) {

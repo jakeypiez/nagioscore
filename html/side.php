@@ -4,6 +4,7 @@ header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
 $this_version = '4.5.13';
+$asset_version = $this_version . '-modern-ui-2';
 $link_target = 'main';
 $theme = isset($cfg['theme']) ? $cfg['theme'] : 'dark';
 if ($theme !== 'dark' && $theme !== 'light') {
@@ -19,10 +20,10 @@ $cgi_base_url = htmlspecialchars($cfg['cgi_base_url'], ENT_QUOTES | ENT_SUBSTITU
 	<meta name="robots" content="noindex, nofollow">
 	<meta name="referrer" content="same-origin">
 	<title>Nagios Core navigation</title>
-	<link rel="stylesheet" href="stylesheets/common.css?<?php echo $this_version; ?>">
-	<link rel="stylesheet" href="stylesheets/frontend.css?<?php echo $this_version; ?>">
-	<link rel="stylesheet" href="stylesheets/theme.css?<?php echo $this_version; ?>">
-	<script src="js/coreui.js?<?php echo $this_version; ?>" defer></script>
+	<link rel="stylesheet" href="stylesheets/common.css?<?php echo $asset_version; ?>">
+	<link rel="stylesheet" href="stylesheets/frontend.css?<?php echo $asset_version; ?>">
+	<link rel="stylesheet" href="stylesheets/theme.css?<?php echo $asset_version; ?>">
+	<script src="js/coreui.js?<?php echo $asset_version; ?>" defer></script>
 </head>
 <body class="navbar">
 	<a class="navbar-brand" href="main.php" target="<?php echo $link_target; ?>" aria-label="Nagios Core overview">

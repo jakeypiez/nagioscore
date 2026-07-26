@@ -90,9 +90,9 @@ $escaped_url = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	<meta name="referrer" content="same-origin">
 	<title>Nagios Core — <?php echo $escaped_server_name; ?></title>
 	<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
-	<link rel="stylesheet" href="stylesheets/theme.css">
-	<link rel="stylesheet" href="stylesheets/shell.css">
-	<script src="js/shell.js" defer></script>
+	<link rel="stylesheet" href="stylesheets/theme.css?modern-ui-2">
+	<link rel="stylesheet" href="stylesheets/shell.css?modern-ui-2">
+	<script src="js/shell.js?modern-ui-2" defer></script>
 </head>
 <body class="app-shell">
 	<a class="skip-link" href="#content-frame">Skip to monitoring content</a>

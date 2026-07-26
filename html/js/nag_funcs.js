@@ -251,7 +251,8 @@ vidbox.prototype.focusPageAfterDismiss = function()
 
 vidbox.prototype.toggleFrame = function(quit)
 {
-	var	w, This = this;
+	var	w, This = this,
+		duration = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
 
 	if (this.showing) {
 		this.showing = false;
@@ -261,7 +262,7 @@ vidbox.prototype.toggleFrame = function(quit)
 		w = this.box.width() * -1;
 
 		if (this.pos.substr(1,1) == 'l') {
-			$(this.box).animate( { "left":w }, 400, function(){
+			$(this.box).animate( { "left":w }, duration, function(){
 				if (quit == true) {
 					$(This.box).remove();
 					This.focusPageAfterDismiss();
@@ -276,7 +277,7 @@ vidbox.prototype.toggleFrame = function(quit)
 			} );
 
 		} else if (this.pos.substr(1,1) == 'r') {
-			$(this.box).animate( { "right":w }, 400, function(){
+			$(this.box).animate( { "right":w }, duration, function(){
 				if (quit == true) {
 					$(This.box).remove();
 					This.focusPageAfterDismiss();
@@ -307,10 +308,10 @@ vidbox.prototype.toggleFrame = function(quit)
 
 		if (this.pos.substr(1,1) == 'l') {
 			$(this.box).css( { "left":w+"px" });
-			$(this.box).animate( { "left":"10px" }, 400  );
+			$(this.box).animate( { "left":"10px" }, duration  );
 		} else if (this.pos.substr(1,1) == 'r') {
 			$(this.box).css( { "right":w+"px" });
-			$(this.box).animate( { "right":"10px" }, 400  );
+			$(this.box).animate( { "right":"10px" }, duration  );
 		}
 	}
 }

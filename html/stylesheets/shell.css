@@ -1,6 +1,6 @@
 :root {
-	--shell-header-height: 64px;
-	--shell-nav-width: 272px;
+	--shell-header-height: 52px;
+	--shell-nav-width: 244px;
 	--shell-bg: var(--nagios-canvas, #0b1120);
 	--shell-panel: var(--nagios-surface, #111a2b);
 	--shell-border: var(--nagios-border, #2b3951);
@@ -45,6 +45,12 @@ body.app-shell {
 	transform: translate(-50%, 0);
 }
 
+body.app-shell a.skip-link:link,
+body.app-shell a.skip-link:visited {
+	color: var(--nagios-accent-contrast, #ffffff);
+	text-decoration: none;
+}
+
 .app-header {
 	display: flex;
 	position: relative;
@@ -53,7 +59,7 @@ body.app-shell {
 	justify-content: space-between;
 	height: var(--shell-header-height);
 	margin: 0;
-	padding: 0 18px;
+	padding: 0 14px;
 	border-bottom: 1px solid var(--shell-border);
 	background: color-mix(in srgb, var(--shell-panel) 94%, transparent);
 }
@@ -69,25 +75,33 @@ body.app-shell {
 
 .app-header-start,
 .app-header-end {
-	gap: 12px;
+	gap: 8px;
 }
 
 .app-brand {
-	gap: 10px;
+	gap: 8px;
+	color: var(--shell-text);
+	text-decoration: none;
+}
+
+body.app-shell a.app-brand:link,
+body.app-shell a.app-brand:visited,
+body.app-shell a.app-brand:hover,
+body.app-shell a.app-brand:active {
 	color: var(--shell-text);
 	text-decoration: none;
 }
 
 .app-brand-mark {
-	width: 30px;
-	height: 30px;
+	width: 24px;
+	height: 24px;
 	background: var(--shell-text);
 	-webkit-mask: url(../images/logos/nagios-n-logo.svg) no-repeat center / contain;
 	mask: url(../images/logos/nagios-n-logo.svg) no-repeat center / contain;
 }
 
 .app-brand-name {
-	font-size: 16px;
+	font-size: 14px;
 	letter-spacing: -0.015em;
 }
 
@@ -103,17 +117,37 @@ body.app-shell {
 
 .icon-button,
 .theme-toggle {
-	min-height: 38px;
+	min-height: 32px;
 	border: 1px solid var(--shell-border);
-	border-radius: 9px;
+	border-radius: 6px;
 	background: transparent;
 	color: var(--shell-text);
 	cursor: pointer;
 }
 
+.icon-button:hover,
+.theme-toggle:hover {
+	border-color: var(--nagios-border-strong, var(--shell-border));
+	background: var(--nagios-surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.icon-button:active,
+.theme-toggle:active {
+	transform: none;
+}
+
+.icon-button:focus-visible,
+.theme-toggle:focus-visible,
+.skip-link:focus-visible,
+.app-brand:focus-visible {
+	outline: 2px solid var(--nagios-focus, var(--shell-primary));
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
 .icon-button {
 	justify-content: center;
-	width: 40px;
+	width: 34px;
 }
 
 .nav-toggle {
@@ -146,17 +180,17 @@ body.app-shell {
 
 .server-badge {
 	max-width: 280px;
-	gap: 8px;
+	gap: 7px;
 	color: var(--shell-muted);
-	font-size: 13px;
+	font-size: 12px;
 }
 
 .server-indicator {
 	width: 7px;
 	height: 7px;
 	border-radius: 50%;
-	background: var(--nagios-success-border, #35d07f);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--nagios-success-border, #35d07f) 16%, transparent);
+	background: var(--shell-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--shell-primary) 16%, transparent);
 }
 
 .server-name {
@@ -166,8 +200,8 @@ body.app-shell {
 }
 
 .theme-toggle {
-	gap: 8px;
-	padding: 0 11px;
+	gap: 7px;
+	padding: 0 9px;
 }
 
 .theme-icon {
@@ -179,7 +213,7 @@ body.app-shell {
 }
 
 .theme-label {
-	font-size: 13px;
+	font-size: 12px;
 	font-weight: 650;
 }
 
@@ -223,6 +257,13 @@ body.app-shell #content-frame {
 	display: none;
 }
 
+.navigation-scrim:hover,
+.navigation-scrim:active {
+	border: 0;
+	background: rgba(2, 8, 18, 0.62);
+	transform: none;
+}
+
 .noscript-message {
 	position: fixed;
 	right: 16px;
@@ -255,8 +296,8 @@ body.app-shell #content-frame {
 
 @media (max-width: 760px) {
 	:root {
-		--shell-header-height: 58px;
-		--shell-nav-width: min(86vw, 320px);
+		--shell-header-height: 50px;
+		--shell-nav-width: min(86vw, 300px);
 	}
 
 	.app-header { padding: 0 10px; }
@@ -264,7 +305,7 @@ body.app-shell #content-frame {
 	.app-brand-name { display: none; }
 	.server-badge { display: none; }
 	.theme-label { display: none; }
-	.theme-toggle { width: 40px; justify-content: center; padding: 0; }
+	.theme-toggle { width: 34px; justify-content: center; padding: 0; }
 
 	.app-layout { display: block; position: relative; }
 

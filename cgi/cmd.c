@@ -1120,6 +1120,7 @@ void request_command_data(int cmd) {
 			printf("</b></td></tr>\n");
 			printf("<tr><td CLASS='optBoxRequiredItem'>Service:</td><td><b>");
 			printf("<INPUT TYPE='TEXT' NAME='service' VALUE='%s'>", escape_string(service_desc));
+			printf("</b></td></tr>\n");
 			if(cmd == CMD_ACKNOWLEDGE_SVC_PROBLEM) {
 				printf("<tr><td CLASS='optBoxItem'>Sticky Acknowledgement:</td><td><b>");
 				printf("<INPUT TYPE='checkbox' NAME='sticky_ack' %s>", (ack_no_sticky == TRUE) ? "" : "CHECKED");
@@ -1157,6 +1158,7 @@ void request_command_data(int cmd) {
 			printf("</b></td></tr>\n");
 			printf("<tr><td CLASS='optBoxRequiredItem'>Service:</td><td><b>");
 			printf("<INPUT TYPE='TEXT' NAME='service' VALUE='%s'>", escape_string(service_desc));
+			printf("</b></td></tr>\n");
 			printf("<tr><td CLASS='optBoxRequiredItem'>Notification Delay (minutes from now):</td><td><b>");
 			printf("<INPUT TYPE='TEXT' NAME='not_dly' VALUE='%d'>", notification_delay);
 			printf("</b></td></tr>\n");
@@ -1315,6 +1317,7 @@ void request_command_data(int cmd) {
 			if(cmd == CMD_SCHEDULE_SVC_DOWNTIME) {
 				printf("<tr><td CLASS='optBoxRequiredItem'>Service:</td><td><b>");
 				printf("<INPUT TYPE='TEXT' NAME='service' VALUE='%s'>", escape_string(service_desc));
+				printf("</b></td></tr>\n");
 				}
 			print_comment_field(cmd);
 
@@ -1490,11 +1493,11 @@ void request_command_data(int cmd) {
 				}
 
 			printf("<tr><td CLASS='optBoxItem'>Forced:</td><td><b>");
-			printf("<INPUT TYPE='checkbox' NAME='force_notification' ");
+			printf("<INPUT TYPE='checkbox' NAME='force_notification'>");
 			printf("</b></td></tr>\n");
 
 			printf("<tr><td CLASS='optBoxItem'>Broadcast:</td><td><b>");
-			printf("<INPUT TYPE='checkbox' NAME='broadcast_notification' ");
+			printf("<INPUT TYPE='checkbox' NAME='broadcast_notification'>");
 			printf("</b></td></tr>\n");
 
 			print_comment_field(cmd);
