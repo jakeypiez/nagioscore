@@ -4,6 +4,8 @@ pkginfo
 Prototype
 nagios.SPARC.pkg.tar.gz
 autom4te.cache
+.DS_Store
+.nagios-lab/
 
 config.log
 config.status

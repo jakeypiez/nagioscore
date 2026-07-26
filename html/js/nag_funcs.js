@@ -137,6 +137,9 @@ oreo.prototype.set = function(parms)
 		cookie += "; domain=" + encodeURIComponent(dom);
 	if (path)
 		cookie += "; path=" + encodeURIComponent(path);
+	cookie += "; SameSite=Lax";
+	if (window.location.protocol === "https:")
+		cookie += "; Secure";
 
 	document.cookie = cookie;
 }
@@ -164,6 +167,7 @@ vidbox = function(args)
 	this.tabClose = null;
 	this.vidbox = null;
 	this.txtbox = null;
+	this.lastFocus = null;
 	this.showing = false;
 	this.pos = args.pos || "lr";
 	this.vidurl = args.vidurl || "";
@@ -188,20 +192,39 @@ vidbox.prototype.init = function()
 
 	this.box = $("<div/>", { 'class':cls1 }).appendTo($('body'));
 
-	this.frame = $("<div/>", { 'class':"vidboxFrame" }).appendTo($(this.box));
+	this.frame = $("<div/>", {
+		'class':"vidboxFrame",
+		'role':"dialog",
+		'aria-label':"Nagios Core page tour",
+		'aria-hidden':"true"
+	}).appendTo($(this.box));
 	if (this.vidid) {
-		this.cancel = $("<div class=vidboxCancel>Never show this again</div>").
+		this.cancel = $("<button/>", {
+			'type':"button",
+			'class':"vidboxCancel",
+			'text':"Never show this again"
+		}).
 						appendTo($(this.frame));
 		$(this.cancel).click(function(){This.cancelBox();});
 	}
 	this.vidbox = $("<div/>", { 'class':"vidFrame" }).appendTo($(this.frame));
 	this.txtbox = $("<div/>", { 'class':"textFrame" }).appendTo($(this.frame));
 
-	this.tab = $("<div/>", { 'class':cls2 }).text("Page Tour").appendTo($('body'));
+	this.tab = $("<button/>", {
+		'type':"button",
+		'class':cls2,
+		'aria-expanded':"false"
+	}).text("Page Tour").appendTo($('body'));
 	$(this.tab).click(function(){This.toggleFrame();});
+	$(document).on("keydown.vidbox", function(event) {
+		if (event.key === "Escape" && This.showing)
+			This.toggleFrame();
+	});
 
 	embed = $("<iframe/>", { 'class':'vidboxIframe', 'width':560,'height':315,
-							'src':this.vidurl } );
+							'src':this.vidurl, 'title':'Nagios Core page tour',
+							'loading':'lazy',
+							'referrerpolicy':'strict-origin-when-cross-origin' } );
 	this.vidbox.append(embed);
 	txt = $("<p/>", { html:this.text } );
 	this.txtbox.append(txt);
@@ -214,39 +237,58 @@ vidbox.prototype.cancelBox = function()
 	this.cookie.set( { name:this.vidid, value:"no", expires:-1 } );
 }
 
+vidbox.prototype.focusPageAfterDismiss = function()
+{
+	var focusTarget = document.querySelector("main, [role='main'], h1") || document.body,
+		hadTabIndex = focusTarget.hasAttribute("tabindex");
+
+	if (!hadTabIndex)
+		focusTarget.setAttribute("tabindex", "-1");
+	focusTarget.focus();
+	if (!hadTabIndex)
+		focusTarget.removeAttribute("tabindex");
+}
+
 vidbox.prototype.toggleFrame = function(quit)
 {
-	var	w, This = this;
+	var	w, This = this,
+		duration = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
 
 	if (this.showing) {
 		this.showing = false;
+		$(this.tab).attr("aria-expanded", "false");
+		$(this.frame).attr("aria-hidden", "true");
 
 		w = this.box.width() * -1;
 
 		if (this.pos.substr(1,1) == 'l') {
-			$(this.box).animate( { "left":w }, 400, function(){
+			$(this.box).animate( { "left":w }, duration, function(){
 				if (quit == true) {
 					$(This.box).remove();
+					This.focusPageAfterDismiss();
 					return;
 				}
 				$(This.frame).css("display", "none");
 				$(This.tab).css("position", "");
 				$(This.tab).addClass("vidboxTab_" + This.pos);
-				$(This.tab).text("Page Tour")
+				$(This.tab).text("Page Tour");
 				$('body').append($(This.tab).detach());
+				$(This.tab).trigger("focus");
 			} );
 
 		} else if (this.pos.substr(1,1) == 'r') {
-			$(this.box).animate( { "right":w }, 400, function(){
+			$(this.box).animate( { "right":w }, duration, function(){
 				if (quit == true) {
 					$(This.box).remove();
+					This.focusPageAfterDismiss();
 					return;
 				}
 				$(This.frame).css("display", "none");
 				$(This.tab).css("position", "");
 				$(This.tab).addClass("vidboxTab_" + This.pos);
-				$(This.tab).text("Page Tour")
+				$(This.tab).text("Page Tour");
 				$('body').append($(This.tab).detach());
+				$(This.tab).trigger("focus");
 			} );
 		}
 
@@ -255,18 +297,21 @@ vidbox.prototype.toggleFrame = function(quit)
 		this.showing = true;
 		$(this.tab).removeClass("vidboxTab_" + this.pos);
 		$(this.tab).css("position", "static");
-		$(this.tab).text("Close")
+		this.lastFocus = document.activeElement;
+		$(this.tab).text("Close").attr("aria-expanded", "true");
+		$(this.frame).attr("aria-hidden", "false");
 		$(this.box).prepend($(this.tab).detach());
 
 		$(this.frame).css("display", "block");
+		$(this.tab).trigger("focus");
 		w = this.box.width() * -1;
 
 		if (this.pos.substr(1,1) == 'l') {
 			$(this.box).css( { "left":w+"px" });
-			$(this.box).animate( { "left":"10px" }, 400  );
+			$(this.box).animate( { "left":"10px" }, duration  );
 		} else if (this.pos.substr(1,1) == 'r') {
 			$(this.box).css( { "right":w+"px" });
-			$(this.box).animate( { "right":"10px" }, 400  );
+			$(this.box).animate( { "right":"10px" }, duration  );
 		}
 	}
 }

@@ -1,0 +1,5 @@
+/*
+ * Theme slot for the classic source tree. The default installation replaces
+ * this file with contrib/modern/stylesheets/theme.css. Keeping the filename
+ * here lets install-classicui reliably disable modern overrides.
+ */

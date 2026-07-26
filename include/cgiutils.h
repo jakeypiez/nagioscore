@@ -59,6 +59,7 @@ NAGIOS_BEGIN_DECL
 	/**************************** STYLE SHEET NAMES ******************************/
 
 #define COMMON_CSS         "common.css"
+#define THEME_CSS          "theme.css?modern-ui-2"
 
 #define SHOWLOG_CSS        "showlog.css"
 #define STATUS_CSS         "status.css"
@@ -81,6 +82,9 @@ NAGIOS_BEGIN_DECL
 	/********************************* JAVASCRIPT INCLUDES **********************/
 #define JQUERY_JS          "jquery-3.7.1.min.js"
 #define NAGFUNCS_JS        "nag_funcs.js"
+#define COREUI_JS          "coreui.js?modern-ui-2"
+
+extern char url_js_path[MAX_FILENAME_LENGTH];
 
 	/********************************* ICONS ************************************/
 

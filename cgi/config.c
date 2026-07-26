@@ -105,7 +105,7 @@ static void print_expand_input(int type) {
 		}
 	printf("<tr><td align=left class='reportSelectSubTitle'>Show Only%s:</td></tr>\n", seldesc);
 	printf("<tr><td align=left class='reportSelectItem'><input type='text' name='expand'\n");
-	printf("value='%s'>", html_encode(to_expand, FALSE));
+	printf("value='%s'></td></tr>", html_encode(to_expand, FALSE));
 	}
 
 int main(void) {
@@ -295,6 +295,7 @@ void document_header(int use_stylesheet) {
 
 	printf("<html>\n");
 	printf("<head>\n");
+	printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 	printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 	printf("<META HTTP-EQUIV='Pragma' CONTENT='no-cache'>\n");
 	printf("<title>\n");
@@ -304,6 +305,8 @@ void document_header(int use_stylesheet) {
 	if(use_stylesheet == TRUE) {
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMON_CSS);
 		printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, CONFIG_CSS);
+		printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+		printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 		}
 
 	printf("</head>\n");
@@ -498,7 +501,7 @@ void display_hosts(void) {
 
 			printf("<TR CLASS='%s'>\n", bg_class);
 
-			printf("<TD CLASS='%s'><a name='%s'><a href='%s?type=services&expand=%s'>%s</a></a></TD>\n", bg_class,
+			printf("<TD CLASS='%s'><a id='%s' href='%s?type=services&expand=%s'>%s</a></TD>\n", bg_class,
 			       url_encode(temp_host->name), CONFIG_CGI, url_encode(temp_host->name), html_encode(temp_host->name, FALSE));
 			printf("<TD CLASS='%s'>%s</TD>\n", bg_class, html_encode(temp_host->alias, FALSE));
 			printf("<TD CLASS='%s'>%s</TD>\n", bg_class, html_encode(temp_host->address, FALSE));
@@ -529,7 +532,7 @@ void display_hosts(void) {
 			if(temp_host->check_command == NULL)
 				printf("&nbsp;");
 			else
-				printf("<a href='%s?type=command&expand=%s'>%s</a></TD>\n", CONFIG_CGI, url_encode(temp_host->check_command), html_encode(temp_host->check_command, FALSE));
+				printf("<a href='%s?type=command&expand=%s'>%s</a>\n", CONFIG_CGI, url_encode(temp_host->check_command), html_encode(temp_host->check_command, FALSE));
 			printf("</TD>\n");
 
 			printf("<TD CLASS='%s'>", bg_class);
@@ -616,15 +619,15 @@ void display_hosts(void) {
 
 			printf("<TD CLASS='%s'>", bg_class);
 			if(temp_host->event_handler == NULL)
-				printf("&nbsp");
+				printf("&nbsp;");
 			else
 				/* printf("<a href='%s?type=commands&expand=%s'>%s</a></TD>\n",CONFIG_CGI,url_encode(strtok(temp_host->event_handler,"!")),html_encode(temp_host->event_handler,FALSE)); */
-				printf("<a href='%s?type=command&expand=%s'>%s</a></TD>\n", CONFIG_CGI, url_encode(temp_host->event_handler), html_encode(temp_host->event_handler, FALSE));
+				printf("<a href='%s?type=command&expand=%s'>%s</a>\n", CONFIG_CGI, url_encode(temp_host->event_handler), html_encode(temp_host->event_handler, FALSE));
 			printf("</TD>\n");
 
 			printf("<TD CLASS='%s'>", bg_class);
 			if(temp_host->event_handler_period == NULL)
-				printf("&nbsp");
+				printf("&nbsp;");
 			else
 				printf("<a href='%s?type=timeperiods&expand=%s'>%s</a>", CONFIG_CGI, url_encode(temp_host->event_handler_period), html_encode(temp_host->event_handler_period, FALSE));
 			printf("</TD>\n");

@@ -744,7 +744,7 @@ int main(int argc, char **argv) {
 			printf("<TABLE BORDER=0 cellpadding=5>\n");
 			printf("<tr><td class='reportSelectSubTitle'>Service:</td>\n");
 			printf("<td class='reportSelectItem'>\n");
-			printf("<select name='service' onFocus='document.serviceform.host.value=gethostname(this.selectedIndex);' onChange='document.serviceform.host.value=gethostname(this.selectedIndex);'>\n");
+			printf("<select name='service' data-sync-host>\n");
 
 			for(temp_service = service_list; temp_service != NULL; temp_service = temp_service->next) {
 				if(is_authorized_for_service(temp_service, &current_authdata) == TRUE)
@@ -994,6 +994,7 @@ void document_header(int use_stylesheet) {
 
 		printf("<html>\n");
 		printf("<head>\n");
+		printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 		printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 		printf("<title>\n");
 		printf("Nagios Histogram\n");
@@ -1002,6 +1003,8 @@ void document_header(int use_stylesheet) {
 		if(use_stylesheet == TRUE) {
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMON_CSS);
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, HISTOGRAM_CSS);
+			printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+			printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 			}
 
 		printf("</head>\n");

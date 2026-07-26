@@ -332,6 +332,7 @@ void document_header(int use_stylesheet) {
 
 		printf("<html>\n");
 		printf("<head>\n");
+		printf("<meta name='viewport' content='width=device-width, initial-scale=1'>\n");
 		printf("<link rel=\"shortcut icon\" href=\"%sfavicon.ico\" type=\"image/ico\">\n", url_images_path);
 		printf("<title>\n");
 		printf("Network Map\n");
@@ -340,6 +341,8 @@ void document_header(int use_stylesheet) {
 		if(use_stylesheet == TRUE) {
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, COMMON_CSS);
 			printf("<LINK REL='stylesheet' TYPE='text/css' HREF='%s%s'>\n", url_stylesheets_path, STATUSMAP_CSS);
+			printf("<link rel='stylesheet' type='text/css' href='%s%s'>\n", url_stylesheets_path, THEME_CSS);
+			printf("<script src='%s%s' defer></script>\n", url_js_path, COREUI_JS);
 			}
 
 		/* write JavaScript code for popup window */
@@ -2248,19 +2251,8 @@ void write_popup_code(void) {
 	printf("<!--\n");
 	printf("// JavaScript popup based on code originally found at http://www.helpmaster.com/htmlhelp/javascript/popjbpopup.htm\n");
 	printf("function showPopup(text, eventObj){\n");
-	printf("if(!document.all && document.getElementById)\n");
-	printf("{ document.all=document.getElementsByTagName(\"*\")}\n");
-	printf("ieLayer = 'document.all[\\'popup\\']';\n");
-	printf("nnLayer = 'document.layers[\\'popup\\']';\n");
-	printf("moLayer = 'document.getElementById(\\'popup\\')';\n");
-
-	printf("if(!(document.all||document.layers||document.documentElement)) return;\n");
-
-	printf("if(document.all) { document.popup=eval(ieLayer); }\n");
-	printf("else {\n");
-	printf("  if (document.documentElement) document.popup=eval(moLayer);\n");
-	printf("  else document.popup=eval(nnLayer);\n");
-	printf("}\n");
+	printf("document.popup=document.getElementById('popup');\n");
+	printf("if(!document.popup) return;\n");
 
 	printf("var table = \"\";\n");
 

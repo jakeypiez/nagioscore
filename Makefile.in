@@ -77,7 +77,8 @@ none:
 		@echo "   install-webconf                  install-config"
 		@echo "   install-init                     install-daemoninit" 
 		@echo "   install-commandmode              install-groups-users"
-		@echo "   install-exfoliation              install-classicui"
+		@echo "   install-modernui                 install-exfoliation"
+		@echo "   install-classicui"
 		@echo "   install-basic                    install-unstripped"
 		@echo "   fullinstall"
 #		@echo "   uninstall"
@@ -141,8 +142,12 @@ all:
 	@echo "     - This installs the Apache config file for the Nagios"
 	@echo "       web interface"
 	@echo ""
+	@echo "  make install-modernui"
+	@echo "     - This installs the modern theme for the Nagios"
+	@echo "       web interface"
+	@echo ""
 	@echo "  make install-exfoliation"
-	@echo "     - This installs the Exfoliation theme for the Nagios"
+	@echo "     - This installs the legacy Exfoliation theme for the Nagios"
 	@echo "       web interface"
 	@echo ""
 	@echo "  make install-classicui"
@@ -275,7 +280,7 @@ coverage: test
 
 install-html:
 	cd $(BLD_HTM) && $(MAKE) install
-	$(MAKE) install-exfoliation
+	$(MAKE) install-modernui
 
 install-base:
 	cd $(BLD_BASE) && $(MAKE) install
@@ -287,14 +292,14 @@ install:
 	cd $(BLD_BASE) && $(MAKE) $@
 	cd $(BLD_CGI) && $(MAKE) $@
 	cd $(BLD_HTM) && $(MAKE) $@
-	$(MAKE) install-exfoliation
+	$(MAKE) install-modernui
 	$(MAKE) install-basic
 
 install-unstripped:
 	cd $(BLD_BASE) && $(MAKE) $@
 	cd $(BLD_CGI) && $(MAKE) $@
 	cd $(BLD_HTM) && $(MAKE) $@
-	$(MAKE) install-exfoliation
+	$(MAKE) install-modernui
 	$(MAKE) install-basic
 
 install-basic:
@@ -357,6 +362,15 @@ install-webconf:
 	@echo "*** Nagios/Apache conf file installed ***"
 	@echo ""
 
+install-modernui:
+	$(INSTALL) $(INSTALL_OPTS) -d $(DESTDIR)$(HTMLDIR)/stylesheets
+	$(INSTALL) -m 644 $(INSTALL_OPTS) $(srcdir)/contrib/modern/stylesheets/theme.css $(DESTDIR)$(HTMLDIR)/stylesheets/theme.css
+
+	@echo ""
+	@echo "*** Modern Nagios Core web interface installed ***"
+	@echo "NOTE: Use 'make install-exfoliation' or 'make install-classicui' to use a legacy theme";
+	@echo ""
+
 install-exfoliation:
 	@( cd $(srcdir)/contrib/exfoliation; \
 	$(INSTALL) $(INSTALL_OPTS) -d $(DESTDIR)$(HTMLDIR)/stylesheets; \
@@ -375,7 +389,7 @@ install-exfoliation:
 
 	@echo ""
 	@echo "*** Exfoliation theme installed ***"
-	@echo "NOTE: Use 'make install-classicui' to revert to classic Nagios theme";
+	@echo "NOTE: Use 'make install-modernui' for the modern interface or 'make install-classicui' for the classic theme";
 	@echo ""
 
 install-classicui:
@@ -392,7 +406,7 @@ install-classicui:
 
 	@echo ""
 	@echo "*** Classic theme installed ***"
-	@echo "NOTE: Use 'make install-exfoliation' to use new Nagios theme";
+	@echo "NOTE: Use 'make install-modernui' for the modern interface or 'make install-exfoliation' for the legacy Exfoliation theme";
 	@echo ""
 
 install-init:
